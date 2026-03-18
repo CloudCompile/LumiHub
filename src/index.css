@@ -1,0 +1,100 @@
+@import './theme/variables.css';
+
+:root {
+  --font-heading: 'Plus Jakarta Sans', var(--lumiverse-font-family);
+  --font-body: 'Inter', var(--lumiverse-font-family);
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: dark;
+  color: var(--lumiverse-text);
+  background-color: #0a0812; 
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  --hub-bg: #0a0812;
+  --hub-bg-elevated: rgba(30, 25, 45, 0.7);
+  --hub-header-bg: rgba(10, 8, 18, 0.75);
+  --hub-card-bg: var(--lumiverse-card-bg);
+  --hub-card-hover: rgba(45, 40, 65, 0.8);
+  --hub-border: rgba(147, 112, 219, 0.1);
+  --hub-border-strong: rgba(147, 112, 219, 0.25);
+  --hub-glass-bg: rgba(25, 20, 35, 0.6);
+  --hub-glass-border: rgba(255, 255, 255, 0.06);
+  --hub-glow-primary: rgba(147, 112, 219, 0.15);
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: var(--hub-bg);
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(147, 112, 219, 0.08) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(123, 31, 162, 0.05) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(147, 112, 219, 0.08) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(123, 31, 162, 0.05) 0px, transparent 50%),
+    radial-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 32px 32px;
+  background-attachment: fixed;
+  font-family: var(--font-body);
+  overflow-x: hidden;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  color: var(--lumiverse-text);
+  font-family: var(--font-heading);
+  letter-spacing: -0.02em;
+}
+
+a {
+  color: var(--lumiverse-primary);
+  text-decoration: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+a:hover {
+  color: var(--lumiverse-primary-hover);
+}
+
+button {
+  cursor: pointer;
+  font-family: var(--font-heading);
+  border: none;
+  outline: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(147, 112, 219, 0.15);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(147, 112, 219, 0.3);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}

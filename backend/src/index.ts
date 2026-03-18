@@ -1,0 +1,28 @@
+import { connectDB } from './db/connection.ts';
+import { initNSFWModel } from './services/nsfw.service.ts';
+import { env } from './env.ts';
+import { logger } from './utils/logger.ts';
+import app from './app.ts';
+
+async function start() {
+  try {
+    logger.info('Starting LumiHub backend...');
+
+    await connectDB();
+    await initNSFWModel();
+
+    // Start server
+    const server = Bun.serve({
+      port: env.PORT,
+      fetch: app.fetch,
+    });
+
+    logger.info(`Server running on http://localhost:${server.port}`);
+    logger.info(`Environment: ${env.NODE_ENV}`);
+  } catch (error) {
+    logger.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+start();

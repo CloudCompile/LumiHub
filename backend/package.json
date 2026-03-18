@@ -1,0 +1,21 @@
+{
+  "name": "lumihub-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "build": "tsc",
+    "start": "bun src/index.ts"
+  },
+  "dependencies": {
+    "hono": "^4.7.11",
+    "mongoose": "^8.9.5",
+    "sharp": "^0.33.5",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.10",
+    "@types/node": "^24.12.0",
+    "typescript": "^5.9.3"
+  }
+}
