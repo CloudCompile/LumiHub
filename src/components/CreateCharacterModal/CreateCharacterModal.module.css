@@ -215,9 +215,14 @@
 }
 
 @media (max-width: 600px) {
+  .overlay {
+    padding: 16px;
+  }
+  
   .modal {
     padding: 28px 20px;
     border-radius: 12px;
+    max-height: calc(100vh - 32px);
   }
 
   .fieldGrid {

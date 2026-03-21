@@ -504,6 +504,12 @@
 
   .heroActions {
     justify-content: center;
+    width: 100%;
+  }
+
+  .installBtn, .secondaryBtn {
+    flex: 1;
+    justify-content: center;
   }
 
   .heroStats {

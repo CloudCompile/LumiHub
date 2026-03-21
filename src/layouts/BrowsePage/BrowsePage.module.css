@@ -288,6 +288,32 @@
 }
 
 @media (max-width: 600px) {
+  .content {
+    padding: 16px 16px;
+  }
+  .topBar {
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .pageTitle {
+    font-size: 24px;
+    flex: 1;
+  }
+  .headerActions {
+    order: 2;
+  }
+  .searchForm {
+    order: 3;
+    width: 100%;
+    max-width: none;
+  }
+  .mobileFilterBtn {
+    order: 4;
+    width: 100%;
+    justify-content: center;
+    margin-top: 4px;
+  }
   .grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
