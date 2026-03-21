@@ -1,13 +1,13 @@
 :root {
-  --lumiverse-primary: rgba(147, 112, 219, 0.9);
-  --lumiverse-primary-hover: rgba(167, 132, 239, 0.95);
-  --lumiverse-primary-light: rgba(147, 112, 219, 0.1);
-  --lumiverse-primary-muted: rgba(147, 112, 219, 0.6);
-  --lumiverse-primary-text: rgba(186, 135, 255, 0.95);
-  --lumiverse-primary-010: rgba(147, 112, 219, 0.1);
-  --lumiverse-primary-015: rgba(147, 112, 219, 0.15);
-  --lumiverse-primary-020: rgba(147, 112, 219, 0.2);
-  --lumiverse-primary-050: rgba(147, 112, 219, 0.5);
+  --lumiverse-primary: rgba(125, 95, 190, 0.85);
+  --lumiverse-primary-hover: rgba(140, 110, 205, 0.9);
+  --lumiverse-primary-light: rgba(125, 95, 190, 0.08);
+  --lumiverse-primary-muted: rgba(125, 95, 190, 0.5);
+  --lumiverse-primary-text: rgba(160, 130, 220, 0.9);
+  --lumiverse-primary-010: rgba(125, 95, 190, 0.1);
+  --lumiverse-primary-015: rgba(125, 95, 190, 0.15);
+  --lumiverse-primary-020: rgba(125, 95, 190, 0.2);
+  --lumiverse-primary-050: rgba(125, 95, 190, 0.4);
 
   --lumiverse-secondary: rgba(128, 128, 128, 0.15);
   --lumiverse-secondary-hover: rgba(128, 128, 128, 0.25);

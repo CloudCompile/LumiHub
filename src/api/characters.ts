@@ -1,0 +1,103 @@
+import type { LumiHubCharacter } from '../types/character';
+
+const BASE = '/api/v1/characters';
+
+interface PaginatedResponse {
+  data: LumiHubCharacter[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+interface SingleResponse {
+  data: LumiHubCharacter;
+}
+
+interface CreateResponse {
+  id: string;
+  message: string;
+}
+
+export interface ListParams {
+  page?: number;
+  limit?: number;
+  sort?: string;
+  order?: 'asc' | 'desc';
+  search?: string;
+}
+
+/** Builds a query string from the given list parameters. */
+function toQuery(params: ListParams): string {
+  const qs = new URLSearchParams();
+  if (params.page) qs.set('page', String(params.page));
+  if (params.limit) qs.set('limit', String(params.limit));
+  if (params.sort) qs.set('sort', params.sort);
+  if (params.order) qs.set('order', params.order);
+  if (params.search) qs.set('search', params.search);
+  return qs.toString();
+}
+
+/** Fetches a paginated list of characters from the backend. */
+export async function listCharacters(params: ListParams = {}): Promise<PaginatedResponse> {
+  const res = await fetch(`${BASE}?${toQuery(params)}`);
+  if (!res.ok) throw new Error(`Failed to list characters: ${res.status}`);
+  return res.json();
+}
+
+/** Fetches a single character by its UUID. */
+export async function getCharacter(id: string): Promise<SingleResponse> {
+  const res = await fetch(`${BASE}/${id}`);
+  if (!res.ok) throw new Error(`Failed to get character: ${res.status}`);
+  return res.json();
+}
+
+/** Creates a new character via multipart form-data. */
+export async function createCharacter(
+  data: Record<string, unknown>,
+  image?: File,
+): Promise<CreateResponse> {
+  const form = new FormData();
+  form.append('character_data', JSON.stringify(data));
+  if (image) form.append('image', image);
+
+  const res = await fetch(BASE, { method: 'POST', body: form });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `Failed to create character: ${res.status}`);
+  }
+  return res.json();
+}
+
+/** Updates an existing character by UUID. */
+export async function updateCharacter(
+  id: string,
+  data: Record<string, unknown>,
+  image?: File,
+): Promise<{ data: LumiHubCharacter; message: string }> {
+  const form = new FormData();
+  form.append('character_data', JSON.stringify(data));
+  if (image) form.append('image', image);
+
+  const res = await fetch(`${BASE}/${id}`, { method: 'PUT', body: form });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `Failed to update character: ${res.status}`);
+  }
+  return res.json();
+}
+
+/** Deletes a character by UUID. */
+export async function deleteCharacter(id: string): Promise<void> {
+  const res = await fetch(`${BASE}/${id}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error(`Failed to delete character: ${res.status}`);
+}
+
+/** Increments the download counter and returns the new count. */
+export async function downloadCharacter(id: string): Promise<{ downloads: number }> {
+  const res = await fetch(`${BASE}/${id}/download`, { method: 'POST' });
+  if (!res.ok) throw new Error(`Failed to record download: ${res.status}`);
+  return res.json();
+}

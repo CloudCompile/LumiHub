@@ -87,6 +87,29 @@
   justify-content: flex-end;
 }
 
+.uploadBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  background: var(--lumiverse-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--lumiverse-radius-md);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-heading);
+  box-shadow: 0 2px 8px rgba(147, 112, 219, 0.3);
+}
+
+.uploadBtn:hover {
+  background: var(--lumiverse-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(147, 112, 219, 0.4);
+}
+
 .main {
   flex: 1;
   width: 100%;

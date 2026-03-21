@@ -1,12 +1,10 @@
 import type { ChubCharacter, ChubSearchResult, ChubSearchOptions, ChubCharacterCard } from '../types/chub';
 
-const CHUB_GATEWAY_BASE = (typeof import.meta.env !== 'undefined' && import.meta.env.DEV) 
-  ? '/api/chub' 
+const CHUB_GATEWAY_BASE = (typeof import.meta.env !== 'undefined' && import.meta.env.DEV)
+  ? '/api/chub'
   : 'https://gateway.chub.ai';
 
-/**
- * Search characters on Chub.ai
- */
+/** Searches for characters on Chub.ai with the given filter options. */
 export async function searchChubCharacters(options: ChubSearchOptions = {}): Promise<ChubSearchResult> {
   const params = new URLSearchParams({
     search: options.search || '',
@@ -57,9 +55,7 @@ export async function searchChubCharacters(options: ChubSearchOptions = {}): Pro
   }
 }
 
-/**
- * Transform Chub API character to our card format
- */
+/** Transforms a raw Chub API node into the app's ChubCharacterCard format. */
 export function transformChubCharacter(node: ChubCharacter): ChubCharacterCard {
   const fullPath = node.fullPath || node.name;
   const creator = fullPath.includes('/') ? fullPath.split('/')[0] : 'Unknown';
@@ -88,29 +84,25 @@ export function transformChubCharacter(node: ChubCharacter): ChubCharacterCard {
   };
 }
 
-/**
- * Get trending characters
- */
+/** Fetches trending characters from Chub.ai. */
 export async function getTrendingCharacters(limit = 24): Promise<ChubCharacterCard[]> {
   const result = await searchChubCharacters({
     sort: 'trending',
     limit,
     page: 1,
-    nsfw: false, // Disable NSFW by default
+    nsfw: false,
   });
 
   return result.nodes.map(transformChubCharacter);
 }
 
-/**
- * Get featured/top rated characters
- */
+/** Fetches top-rated characters from Chub.ai. */
 export async function getFeaturedCharacters(limit = 24): Promise<ChubCharacterCard[]> {
   const result = await searchChubCharacters({
     sort: 'rating',
     limit,
     page: 1,
-    nsfw: false, // Disable NSFW by default
+    nsfw: false,
   });
 
   return result.nodes.map(transformChubCharacter);

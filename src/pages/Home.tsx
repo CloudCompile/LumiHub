@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Users, Book, Palette, Sparkles, ArrowRight, Download, Plug } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Users, Book, Palette, Sparkles, ArrowRight, Download, Plug, Plus } from 'lucide-react';
 import styles from './Home.module.css';
 
 const LUMIA_IMAGES = [
@@ -18,6 +18,7 @@ const LUMIA_IMAGES = [
 const randomLumia = LUMIA_IMAGES[Math.floor(Math.random() * LUMIA_IMAGES.length)];
 
 const Home = () => {
+  const navigate = useNavigate();
   const [lumiaLoaded, setLumiaLoaded] = useState(false);
 
   return (
@@ -30,13 +31,17 @@ const Home = () => {
             The <span className={styles.highlight}>Lumiverse</span> Hub
           </h1>
           <p className={styles.subtitle}>
-            Browse and install characters, worldbooks, and themes shared by the community,
-            directly into your local Lumiverse instance.
+            Browse, share, and upload characters, worldbooks, and themes.
+            Build your library directly from the community.
           </p>
           <div className={styles.heroActions}>
             <Link to="/characters" className={styles.primaryAction}>
               Browse Characters
             </Link>
+            <button className={styles.secondaryAction} onClick={() => navigate('/characters')}>
+              <Plus size={16} />
+              Upload a Character
+            </button>
           </div>
         </div>
         <div className={styles.heroImageWrapper}>

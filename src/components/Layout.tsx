@@ -1,11 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Home, Users, Book, Palette, Sparkles } from 'lucide-react';
+import { Home, Users, Book, Palette, Sparkles, Plus } from 'lucide-react';
+import { AnimatePresence } from 'motion/react';
 import clsx from 'clsx';
 import styles from './Layout.module.css';
+import CreateCharacterModal from './CreateCharacterModal/CreateCharacterModal';
 
 const Layout: React.FC = () => {
   const location = useLocation();
+  const [showCreate, setShowCreate] = useState(false);
 
   return (
     <div className={styles.container}>
@@ -51,7 +54,10 @@ const Layout: React.FC = () => {
           </nav>
 
           <div className={styles.headerActions}>
-            {/* Planned? We'll see */}
+            <button className={styles.uploadBtn} onClick={() => setShowCreate(true)}>
+              <Plus size={16} strokeWidth={2.5} />
+              <span>Upload</span>
+            </button>
           </div>
         </div>
       </header>
@@ -63,6 +69,13 @@ const Layout: React.FC = () => {
       <footer className={styles.footer}>
         <p>Built for the Lumiverse community.</p>
       </footer>
+
+      {/* Global create modal — accessible from the header */}
+      <AnimatePresence>
+        {showCreate && (
+          <CreateCharacterModal onClose={() => setShowCreate(false)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

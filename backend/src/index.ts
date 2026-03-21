@@ -1,9 +1,11 @@
+import 'reflect-metadata';
 import { connectDB } from './db/connection.ts';
 import { initNSFWModel } from './services/nsfw.service.ts';
 import { env } from './env.ts';
 import { logger } from './utils/logger.ts';
 import app from './app.ts';
 
+/** Connects to the database, initializes services, and starts the HTTP server. */
 async function start() {
   try {
     logger.info('Starting LumiHub backend...');
@@ -11,7 +13,6 @@ async function start() {
     await connectDB();
     await initNSFWModel();
 
-    // Start server
     const server = Bun.serve({
       port: env.PORT,
       fetch: app.fetch,

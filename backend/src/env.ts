@@ -1,7 +1,8 @@
 import { z } from 'zod';
 
+/** Validates required environment variables at startup. */
 const envSchema = z.object({
-  MONGODB_URI: z.string().default('mongodb://localhost:27017/lumihub'),
+  DATABASE_URL: z.string().default('postgres://postgres:postgres@localhost:5432/lumihub'),
   PORT: z.string().default('3000'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 });
@@ -14,7 +15,7 @@ if (!parsed.success) {
 }
 
 export const env = {
-  MONGODB_URI: parsed.data.MONGODB_URI,
+  DATABASE_URL: parsed.data.DATABASE_URL,
   PORT: parseInt(parsed.data.PORT, 10),
   NODE_ENV: parsed.data.NODE_ENV,
 };
