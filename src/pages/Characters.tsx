@@ -2,7 +2,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { useCharacterStore } from '../store/useCharacterStore';
 import CharacterCard from '../components/CharacterCard/CharacterCard';
 import CharacterModal from '../components/CharacterModal/CharacterModal';
-import { Sparkles, Globe, Calendar, Download, CaseSensitive, Flame } from 'lucide-react';
+import CreateCharacterModal from '../components/CreateCharacterModal/CreateCharacterModal';
+import { Sparkles, Globe, Calendar, Download, CaseSensitive, Flame, Plus } from 'lucide-react';
 import type { UnifiedCharacterCard, CharacterSource } from '../types/character';
 import BrowsePage from '../layouts/BrowsePage/BrowsePage';
 import { 
@@ -48,6 +49,7 @@ const Characters = () => {
   } = useCharacterStore();
 
   const [previewCard, setPreviewCard] = useState<UnifiedCharacterCard | null>(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [localSearch, setLocalSearch] = useState(search);
   const [mobileFilters, setMobileFilters] = useState(false);
 
@@ -79,6 +81,15 @@ const Characters = () => {
       <BrowsePage
         title="Characters"
         searchPlaceholder="Search characters..."
+        headerActions={
+          <button 
+            className={styles.createBtn}
+            onClick={() => setIsCreateOpen(true)}
+          >
+            <Plus size={16} />
+            Create
+          </button>
+        }
         emptyStateTitle={source === 'lumihub' ? 'No characters yet' : 'No characters found'}
         emptyStateDesc={source === 'lumihub' ? 'Be the first to upload a character!' : 'Try adjusting your search or filters.'}
         search={localSearch}
@@ -160,6 +171,11 @@ const Characters = () => {
       {/* Detail Panel */}
       {previewCard && (
         <CharacterModal card={previewCard} onClose={() => setPreviewCard(null)} />
+      )}
+
+      {/* Create Modal */}
+      {isCreateOpen && (
+        <CreateCharacterModal onClose={() => setIsCreateOpen(false)} />
       )}
     </>
   );

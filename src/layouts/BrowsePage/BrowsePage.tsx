@@ -13,6 +13,7 @@ interface PaginationProps {
 interface BrowsePageProps {
   title: string;
   sidebar: React.ReactNode;
+  headerActions?: React.ReactNode;
   search: string;
   onSearchChange: (search: string) => void;
   onSearchSubmit: (e: React.FormEvent) => void;
@@ -33,6 +34,7 @@ interface BrowsePageProps {
 const BrowsePage: React.FC<BrowsePageProps> = ({
   title,
   sidebar,
+  headerActions,
   search,
   onSearchChange,
   onSearchSubmit,
@@ -90,6 +92,12 @@ const BrowsePage: React.FC<BrowsePageProps> = ({
               </button>
             )}
           </form>
+
+          {headerActions && (
+            <div className={styles.headerActions}>
+              {headerActions}
+            </div>
+          )}
 
           <button className={styles.mobileFilterBtn} onClick={onToggleMobileFilters}>
             <SlidersHorizontal size={16} />
