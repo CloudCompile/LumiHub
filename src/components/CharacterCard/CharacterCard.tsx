@@ -9,7 +9,7 @@ interface Props {
   onClick?: () => void;
 }
 
-/** Renders a single character card in the browse grid. */
+/** Renders a single character tile in the browse grid. */
 const CharacterCard: React.FC<Props> = ({ card, blurNsfw = true, onClick }) => {
   const [revealed, setRevealed] = useState(false);
   const shouldBlur = card.nsfw && blurNsfw && !revealed;
@@ -19,9 +19,14 @@ const CharacterCard: React.FC<Props> = ({ card, blurNsfw = true, onClick }) => {
     setRevealed((r) => !r);
   };
 
+  const formattedDownloads =
+    card.downloads > 1000
+      ? `${(card.downloads / 1000).toFixed(1)}k`
+      : String(card.downloads);
+
   return (
     <div className={styles.card} onClick={onClick}>
-      <div className={styles.imageWrapper}>
+      <div className={styles.imageArea}>
         {card.avatarUrl ? (
           <img
             src={card.avatarUrl}
@@ -33,42 +38,36 @@ const CharacterCard: React.FC<Props> = ({ card, blurNsfw = true, onClick }) => {
           <div className={styles.placeholder}>{card.name.charAt(0)}</div>
         )}
 
+        {/* NSFW reveal overlay */}
         {shouldBlur && (
           <div className={styles.revealOverlay} onClick={handleReveal}>
-            <Eye size={16} style={{ marginRight: '6px' }} />
-            Click to Reveal
+            <Eye size={16} />
+            <span>Reveal</span>
           </div>
         )}
 
-        {card.rating && card.rating > 4.7 && (
-          <div className={styles.badge}>Masterpiece</div>
-        )}
-
+        {/* Source badge */}
         <div className={`${styles.sourceBadge} ${card.source === 'chub' ? styles.sourceBadgeChub : ''}`}>
           {card.source === 'lumihub' ? 'LumiHub' : 'Chub'}
         </div>
-      </div>
 
-      <div className={styles.content}>
-        <div className={styles.header}>
-          <h3 className={styles.name} title={card.name}>{card.name}</h3>
-          <p className={styles.author}>by {card.creator}</p>
-        </div>
+        {/* Rating badge */}
+        {card.rating !== null && card.rating > 4.5 && (
+          <div className={styles.ratingBadge}>
+            <Star size={10} />
+            {card.rating.toFixed(1)}
+          </div>
+        )}
 
-        <p className={styles.tagline}>{card.tagline || 'No description provided.'}</p>
-
-        <div className={styles.footer}>
-          <div className={styles.stats}>
-            <div className={styles.stat} title="Downloads">
-              <Download size={14} className={styles.statIcon} />
-              {card.downloads > 1000 ? `${(card.downloads / 1000).toFixed(1)}k` : card.downloads}
-            </div>
-            {card.rating !== null && (
-              <div className={styles.stat} title="Rating">
-                <Star size={14} className={styles.statIcon} />
-                {card.rating.toFixed(1)}
-              </div>
-            )}
+        {/* Gradient scrim with overlaid text */}
+        <div className={styles.scrim}>
+          <h3 className={styles.name}>{card.name}</h3>
+          <div className={styles.meta}>
+            <span className={styles.creator}>by {card.creator}</span>
+            <span className={styles.downloads}>
+              <Download size={11} />
+              {formattedDownloads}
+            </span>
           </div>
         </div>
       </div>

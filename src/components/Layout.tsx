@@ -1,81 +1,77 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Home, Users, Book, Palette, Sparkles, Plus } from 'lucide-react';
-import { AnimatePresence } from 'motion/react';
+import { Home, Users, Book, Palette, Sparkles } from 'lucide-react';
 import clsx from 'clsx';
 import styles from './Layout.module.css';
-import CreateCharacterModal from './CreateCharacterModal/CreateCharacterModal';
+
 
 const Layout: React.FC = () => {
   const location = useLocation();
-  const [showCreate, setShowCreate] = useState(false);
+
+  const isActive = (path: string) => {
+    if (path === '/') return location.pathname === '/';
+    return location.pathname.startsWith(path);
+  };
 
   return (
-    <div className={styles.container}>
+    <div className={styles.shell}>
       <header className={styles.header}>
-        <div className={styles.headerContent}>
-          <Link to="/" className={styles.logo}>
-            <Sparkles className={styles.logoIcon} size={22} strokeWidth={2.5} />
-            <span className={styles.logoText}>LumiHub</span>
+        <div className={styles.headerInner}>
+          <Link to="/" className={styles.brand}>
+            <Sparkles className={styles.brandIcon} size={20} strokeWidth={2.5} />
+            <span className={styles.brandText}>LumiHub</span>
           </Link>
 
           <nav className={styles.nav}>
             <Link
               to="/"
-              className={clsx(styles.navLink, location.pathname === '/' && styles.active)}
+              className={clsx(styles.navItem, isActive('/') && styles.navItemActive)}
             >
-              <Home size={16} strokeWidth={location.pathname === '/' ? 2.5 : 2} />
-              <span>Home</span>
+              <Home size={16} strokeWidth={isActive('/') ? 2.5 : 2} />
+              <span>Discover</span>
             </Link>
-
+            
             <Link
               to="/characters"
-              className={clsx(styles.navLink, location.pathname === '/characters' && styles.active)}
+              className={clsx(styles.navItem, isActive('/characters') && styles.navItemActive)}
             >
-              <Users size={16} strokeWidth={location.pathname === '/characters' ? 2.5 : 2} />
+              <Users size={16} strokeWidth={isActive('/characters') ? 2.5 : 2} />
               <span>Characters</span>
             </Link>
-
+            
             <Link
               to="/worldbooks"
-              className={clsx(styles.navLink, location.pathname === '/worldbooks' && styles.active)}
+              className={clsx(styles.navItem, isActive('/worldbooks') && styles.navItemActive)}
             >
-              <Book size={16} strokeWidth={location.pathname === '/worldbooks' ? 2.5 : 2} />
+              <Book size={16} strokeWidth={isActive('/worldbooks') ? 2.5 : 2} />
               <span>Worldbooks</span>
             </Link>
-
+            
             <Link
               to="/themes"
-              className={clsx(styles.navLink, location.pathname === '/themes' && styles.active)}
+              className={clsx(styles.navItem, isActive('/themes') && styles.navItemActive)}
             >
-              <Palette size={16} strokeWidth={location.pathname === '/themes' ? 2.5 : 2} />
+              <Palette size={16} strokeWidth={isActive('/themes') ? 2.5 : 2} />
               <span>Themes</span>
+            </Link>
+            
+            <Link
+              to="/presets"
+              className={clsx(styles.navItem, isActive('/presets') && styles.navItemActive)}
+            >
+              <Sparkles size={16} strokeWidth={isActive('/presets') ? 2.5 : 2} />
+              <span>Presets</span>
             </Link>
           </nav>
 
-          <div className={styles.headerActions}>
-            <button className={styles.uploadBtn} onClick={() => setShowCreate(true)}>
-              <Plus size={16} strokeWidth={2.5} />
-              <span>Upload</span>
-            </button>
-          </div>
+          {/* Right side reserved for future: user menu, notifications, etc. */}
+          <div className={styles.headerRight} />
         </div>
       </header>
 
       <main className={styles.main}>
         <Outlet />
       </main>
-
-      <footer className={styles.footer}>
-        <p>Built for the Lumiverse community.</p>
-      </footer>
-
-      {/* Global create modal — accessible from the header */}
-      <AnimatePresence>
-        {showCreate && (
-          <CreateCharacterModal onClose={() => setShowCreate(false)} />
-        )}
-      </AnimatePresence>
     </div>
   );
 };

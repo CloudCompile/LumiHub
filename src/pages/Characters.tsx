@@ -1,15 +1,46 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Search, TrendingUp, Clock, Download, Plus, Sparkles } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
 import { useCharacterStore } from '../store/useCharacterStore';
 import CharacterCard from '../components/CharacterCard/CharacterCard';
 import CharacterModal from '../components/CharacterModal/CharacterModal';
-import SourceToggle from '../components/SourceToggle/SourceToggle';
-import CreateCharacterModal from '../components/CreateCharacterModal/CreateCharacterModal';
-import type { UnifiedCharacterCard } from '../types/character';
+import { Sparkles, Globe, Calendar, Download, CaseSensitive, Flame } from 'lucide-react';
+import type { UnifiedCharacterCard, CharacterSource } from '../types/character';
+import BrowsePage from '../layouts/BrowsePage/BrowsePage';
+import { 
+  FilterSidebar, 
+  FilterSection, 
+  FilterRadioGroup, 
+  FilterRadioOption,
+  FilterSortList,
+  FilterSortOption,
+  FilterPlaceholder,
+  FilterCheckbox
+} from '../layouts/BrowsePage/FilterSidebar';
 import styles from './Characters.module.css';
 
-/** Browse, search, and create characters from LumiHub or Chub sources. */
+const SORT_OPTIONS_LUMIHUB = [
+  { key: 'created_at', label: 'Newest', icon: <Calendar size={14} /> },
+  { key: 'downloads', label: 'Most Downloaded', icon: <Download size={14} /> },
+  { key: 'name', label: 'Alphabetical', icon: <CaseSensitive size={14} /> },
+];
+
+const SORT_OPTIONS_CHUB = [
+  { key: 'default', label: 'Trending', icon: <Flame size={14} /> },
+  { key: 'created_at', label: 'Newest', icon: <Calendar size={14} /> },
+  { key: 'download_count', label: 'Most Downloaded', icon: <Download size={14} /> },
+];
+
+function SkeletonGrid() {
+  return (
+    <>
+      {Array.from({ length: 12 }).map((_, i) => (
+        <div key={i} className={styles.skeleton}>
+          <div className={styles.skeletonShimmer} />
+        </div>
+      ))}
+    </>
+  );
+}
+
 const Characters = () => {
   const {
     characters, loading, error, source, search, sort, pagination,
@@ -17,13 +48,14 @@ const Characters = () => {
   } = useCharacterStore();
 
   const [previewCard, setPreviewCard] = useState<UnifiedCharacterCard | null>(null);
-  const [showCreate, setShowCreate] = useState(false);
   const [localSearch, setLocalSearch] = useState(search);
+  const [mobileFilters, setMobileFilters] = useState(false);
 
   useEffect(() => {
     fetchCharacters();
-  }, []);
+  }, [fetchCharacters]);
 
+  // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
       if (localSearch !== search) {
@@ -32,164 +64,104 @@ const Characters = () => {
       }
     }, 400);
     return () => clearTimeout(timer);
-  }, [localSearch]);
+  }, [localSearch, search, setSearch, fetchCharacters]);
 
   const handleSearchSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     setSearch(localSearch);
     fetchCharacters();
-  }, [localSearch]);
+  }, [localSearch, setSearch, fetchCharacters]);
 
-  const sortOptions = source === 'lumihub'
-    ? [
-        { key: 'created_at', label: 'Newest',    icon: Clock },
-        { key: 'downloads',  label: 'Downloads', icon: Download },
-        { key: 'name',       label: 'Name',      icon: Sparkles },
-      ]
-    : [
-        { key: 'default',       label: 'Trending',   icon: TrendingUp },
-        { key: 'created_at',    label: 'Newest',     icon: Clock },
-        { key: 'download_count', label: 'Downloads', icon: Download },
-      ];
+  const sortOptions = source === 'lumihub' ? SORT_OPTIONS_LUMIHUB : SORT_OPTIONS_CHUB;
 
   return (
-    <div className={styles.page}>
-      <div className={styles.container}>
-        <div className={styles.toolbar}>
-          <div className={styles.toolbarTop}>
-            <h1 className={styles.title}>Characters</h1>
+    <>
+      <BrowsePage
+        title="Characters"
+        searchPlaceholder="Search characters..."
+        emptyStateTitle={source === 'lumihub' ? 'No characters yet' : 'No characters found'}
+        emptyStateDesc={source === 'lumihub' ? 'Be the first to upload a character!' : 'Try adjusting your search or filters.'}
+        search={localSearch}
+        onSearchChange={setLocalSearch}
+        onSearchSubmit={handleSearchSubmit}
+        onClearSearch={() => {
+          setLocalSearch('');
+          setSearch('');
+          fetchCharacters();
+        }}
+        loading={loading}
+        error={error}
+        itemsCount={characters.length}
+        pagination={{
+          page: pagination.page,
+          total: pagination.total,
+          totalPages: pagination.totalPages,
+          onPageChange: setPage,
+        }}
+        mobileFiltersOpen={mobileFilters}
+        onToggleMobileFilters={() => setMobileFilters(!mobileFilters)}
+        SkeletonGrid={SkeletonGrid}
+        sidebar={
+          <FilterSidebar>
+            <FilterSection label="Source">
+              <FilterRadioGroup>
+                <FilterRadioOption
+                  name="source"
+                  value="lumihub"
+                  label="LumiHub"
+                  icon={<Sparkles size={14} />}
+                  checked={source === 'lumihub'}
+                  onChange={(val) => setSource(val as CharacterSource)}
+                />
+                <FilterRadioOption
+                  name="source"
+                  value="chub"
+                  label="Chub.ai"
+                  icon={<Globe size={14} />}
+                  checked={source === 'chub'}
+                  onChange={(val) => setSource(val as CharacterSource)}
+                />
+              </FilterRadioGroup>
+            </FilterSection>
 
-            <form onSubmit={handleSearchSubmit} className={styles.searchBox}>
-              <Search size={18} className={styles.searchIcon} />
-              <input
-                type="text"
-                placeholder="Search by name..."
-                className={styles.searchInput}
-                value={localSearch}
-                onChange={(e) => setLocalSearch(e.target.value)}
-              />
-            </form>
-          </div>
-
-          <div className={styles.filtersRow}>
-            <div className={styles.filterGroup}>
-              {sortOptions.map((opt) => (
-                <button
-                  key={opt.key}
-                  className={`${styles.filterBtn} ${sort === opt.key ? styles.filterBtnActive : ''}`}
-                  onClick={() => setSort(opt.key)}
-                >
-                  <opt.icon size={16} />
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-
-            <div className={styles.rightControls}>
-              <SourceToggle value={source} onChange={setSource} />
-
-              <button className={styles.createBtn} onClick={() => setShowCreate(true)}>
-                <Plus size={18} />
-                Create
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {error && (
-          <div className={styles.errorBanner}>
-            {error}
-          </div>
-        )}
-
-        <AnimatePresence mode="wait">
-          {loading ? (
-            <motion.div
-              key="loader"
-              className={styles.loadingContainer}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <div className={styles.spinner} />
-              <span className={styles.loadingText}>Loading characters...</span>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="grid"
-              className={styles.grid}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              {characters.length > 0 ? (
-                characters.map((card) => (
-                  <CharacterCard
-                    key={card.id}
-                    card={card}
-                    onClick={() => setPreviewCard(card)}
+            <FilterSection label="Sort By">
+              <FilterSortList>
+                {sortOptions.map((opt) => (
+                  <FilterSortOption
+                    key={opt.key}
+                    label={opt.label}
+                    icon={opt.icon}
+                    active={sort === opt.key}
+                    onClick={() => setSort(opt.key)}
                   />
-                ))
-              ) : (
-                <div className={styles.emptyState}>
-                  <Sparkles size={32} className={styles.emptyIcon} />
-                  <h3>
-                    {source === 'lumihub'
-                      ? 'No characters yet'
-                      : 'No characters found'}
-                  </h3>
-                  <p>
-                    {source === 'lumihub'
-                      ? 'Be the first to upload a character!'
-                      : 'Try adjusting your search or filters.'}
-                  </p>
-                  {source === 'lumihub' && (
-                    <button className={styles.emptyCreateBtn} onClick={() => setShowCreate(true)}>
-                      <Plus size={18} />
-                      Create Character
-                    </button>
-                  )}
-                </div>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+                ))}
+              </FilterSortList>
+            </FilterSection>
 
-        {!loading && pagination.totalPages > 1 && (
-          <div className={styles.pagination}>
-            <button
-              className={styles.pageBtn}
-              disabled={pagination.page <= 1}
-              onClick={() => setPage(pagination.page - 1)}
-            >
-              Previous
-            </button>
-            <span className={styles.pageInfo}>
-              Page {pagination.page} of {pagination.totalPages}
-            </span>
-            <button
-              className={styles.pageBtn}
-              disabled={pagination.page >= pagination.totalPages}
-              onClick={() => setPage(pagination.page + 1)}
-            >
-              Next
-            </button>
-          </div>
-        )}
-      </div>
+            <FilterSection label="Tags">
+              <FilterPlaceholder text="Tag filtering coming soon" />
+            </FilterSection>
 
-      <AnimatePresence>
-        {previewCard && (
-          <CharacterModal card={previewCard} onClose={() => setPreviewCard(null)} />
-        )}
-      </AnimatePresence>
+            <FilterSection label="Content">
+              <FilterCheckbox label="Show NSFW" disabled={true} />
+            </FilterSection>
+          </FilterSidebar>
+        }
+      >
+        {characters.map((card) => (
+          <CharacterCard
+            key={card.id}
+            card={card}
+            onClick={() => setPreviewCard(card)}
+          />
+        ))}
+      </BrowsePage>
 
-      <AnimatePresence>
-        {showCreate && (
-          <CreateCharacterModal onClose={() => setShowCreate(false)} />
-        )}
-      </AnimatePresence>
-    </div>
+      {/* Detail Panel */}
+      {previewCard && (
+        <CharacterModal card={previewCard} onClose={() => setPreviewCard(null)} />
+      )}
+    </>
   );
 };
 

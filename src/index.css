@@ -7,21 +7,26 @@
   font-weight: 400;
   color-scheme: dark;
   color: var(--lumiverse-text);
-  background-color: #0a0812; 
+  background-color: #0a0812;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  --hub-bg: #0a0812;
-  --hub-bg-elevated: rgba(30, 25, 45, 0.7);
-  --hub-header-bg: rgba(10, 8, 18, 0.75);
+  --hub-bg: #09080e;
+  --hub-bg-elevated: #110e1a;
+  --hub-header-bg: rgba(9, 8, 14, 0.85);
   --hub-card-bg: var(--lumiverse-card-bg);
-  --hub-card-hover: rgba(45, 40, 65, 0.8);
-  --hub-border: rgba(147, 112, 219, 0.1);
-  --hub-border-strong: rgba(147, 112, 219, 0.25);
-  --hub-glass-bg: rgba(25, 20, 35, 0.6);
+  --hub-card-hover: #161224;
+  --hub-border: rgba(139, 111, 207, 0.12);
+  --hub-border-strong: rgba(139, 111, 207, 0.20);
+  --hub-glass-bg: #14111d;
   --hub-glass-border: rgba(255, 255, 255, 0.06);
-  --hub-glow-primary: rgba(147, 112, 219, 0.15);
+  --hub-glow-primary: rgba(139, 111, 207, 0.15);
+}
+
+
+html {
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -29,16 +34,9 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background-color: var(--hub-bg);
-  background-image: 
-    radial-gradient(at 0% 0%, rgba(125, 95, 190, 0.05) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(100, 25, 130, 0.03) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(125, 95, 190, 0.05) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, rgba(100, 25, 130, 0.03) 0px, transparent 50%),
-    radial-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 32px 32px;
+  background-image: radial-gradient(circle at top center, rgba(40, 30, 60, 0.08) 0%, rgba(9, 8, 14, 1) 40%);
   background-attachment: fixed;
   font-family: var(--font-body);
-  overflow-x: hidden;
 }
 
 #root {
@@ -52,7 +50,12 @@ body {
   box-sizing: border-box;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   margin: 0;
   color: var(--lumiverse-text);
   font-family: var(--font-heading);
@@ -62,7 +65,7 @@ h1, h2, h3, h4, h5, h6 {
 a {
   color: var(--lumiverse-primary);
   text-decoration: none;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: color 0.15s ease;
 }
 
 a:hover {
@@ -74,12 +77,12 @@ button {
   font-family: var(--font-heading);
   border: none;
   outline: none;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.15s ease;
 }
 
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -87,14 +90,10 @@ button {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(147, 112, 219, 0.15);
-  border: 2px solid transparent;
-  background-clip: padding-box;
-  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(147, 112, 219, 0.3);
-  border: 2px solid transparent;
-  background-clip: padding-box;
+  background: rgba(255, 255, 255, 0.14);
 }

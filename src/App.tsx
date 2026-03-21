@@ -12,6 +12,7 @@ function App() {
           <Route path="characters" element={<Characters />} />
           <Route path="worldbooks" element={<div>Worldbooks Page (Coming Soon)</div>} />
           <Route path="themes" element={<div>Themes Page (Coming Soon)</div>} />
+          <Route path="presets" element={<div>Presets Page (Coming Soon)</div>} />
         </Route>
       </Routes>
     </BrowserRouter>
