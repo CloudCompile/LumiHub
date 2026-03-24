@@ -1,0 +1,231 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  overflow-y: auto;
+}
+
+.modal {
+  background: var(--lumihub-bg);
+  border: 1px solid var(--lumihub-glass-border);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 680px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  padding: 40px;
+}
+
+.closeBtn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  color: var(--lumihub-text-dim);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.closeBtn:hover {
+  color: var(--lumihub-text);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--lumihub-text);
+  margin: 0 0 6px 0;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: var(--lumihub-text-muted);
+  margin: 0 0 28px 0;
+  line-height: 1.55;
+}
+
+/* ── Form ── */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.fieldGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--lumihub-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-family: var(--font-heading);
+}
+
+.field input,
+.field textarea {
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--lumihub-glass-border);
+  padding: 10px 14px;
+  border-radius: 8px;
+  color: var(--lumihub-text);
+  font-size: 14px;
+  font-family: var(--font-body);
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.15s ease;
+}
+
+.field input:focus,
+.field textarea:focus {
+  border-color: var(--lumihub-primary-020);
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+  color: var(--lumihub-text-dim);
+}
+
+.imageUpload {
+  width: 100%;
+  aspect-ratio: 16/9;
+  max-height: 200px;
+  background: rgba(0, 0, 0, 0.1);
+  border: 2px dashed var(--lumihub-glass-border);
+  border-radius: 12px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.imageUpload:hover {
+  border-color: var(--lumihub-primary-020);
+}
+
+.imagePreview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.imagePlaceholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: var(--lumihub-text-dim);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* ── Feedback ── */
+.errorBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--lumihub-danger-015);
+  border: 1px solid var(--lumihub-danger-020);
+  border-radius: 8px;
+  color: var(--lumihub-danger);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.autofillBanner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 8px;
+  color: var(--lumihub-success);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.successState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 60px 0;
+  color: var(--lumihub-success);
+  font-size: 18px;
+  font-weight: 700;
+  font-family: var(--font-heading);
+}
+
+.submitBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  width: 100%;
+  background: var(--lumihub-primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  font-family: var(--font-heading);
+  margin-top: 4px;
+}
+
+.submitBtn:hover:not(:disabled) {
+  background: var(--lumihub-primary-hover);
+}
+
+.submitBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .overlay {
+    padding: 16px;
+  }
+  
+  .modal {
+    padding: 28px 20px;
+    border-radius: 12px;
+    max-height: calc(100vh - 32px);
+  }
+
+  .fieldGrid {
+    grid-template-columns: 1fr;
+  }
+}

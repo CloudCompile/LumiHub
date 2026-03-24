@@ -27,6 +27,7 @@ export interface ListParams {
   sort?: string;
   order?: 'asc' | 'desc';
   search?: string;
+  ownerId?: string;
 }
 
 /** Builds a query string from the given list parameters. */
@@ -37,6 +38,7 @@ function toQuery(params: ListParams): string {
   if (params.sort) qs.set('sort', params.sort);
   if (params.order) qs.set('order', params.order);
   if (params.search) qs.set('search', params.search);
+  if (params.ownerId) qs.set('ownerId', params.ownerId);
   return qs.toString();
 }
 

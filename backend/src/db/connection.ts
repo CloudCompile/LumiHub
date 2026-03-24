@@ -2,6 +2,10 @@ import { DataSource } from 'typeorm';
 import { env } from '../env.ts';
 import { logger } from '../utils/logger.ts';
 import { Character } from '../entities/Character.entity.ts';
+import { User } from '../entities/User.entity.ts';
+import { Worldbook } from '../entities/Worldbook.entity.ts';
+import { Preset } from '../entities/Preset.entity.ts';
+import { Theme } from '../entities/Theme.entity.ts';
 import { PostgresQueryRunner } from 'typeorm/driver/postgres/PostgresQueryRunner.js';
 
 /** Serializes queries to work around TypeORM issue #12055. */
@@ -22,13 +26,16 @@ PostgresQueryRunner.prototype.query = function (this: any, ...args: any[]) {
   });
 };
 
+/**
+ * Global TypeORM DataSource configuration.
+ */
 export const AppDataSource = new DataSource({
   type: 'postgres',
   url: env.DATABASE_URL,
   synchronize: env.NODE_ENV === 'development',
   logging: ['error'],
-  entities: [Character],
-  extra: { max: 5 },
+  entities: [Character, User, Worldbook, Preset, Theme],
+  extra: { max: 20 },
 });
 
 /** Initializes the TypeORM DataSource and connects to PostgreSQL. */

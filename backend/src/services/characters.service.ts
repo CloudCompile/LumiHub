@@ -14,8 +14,9 @@ export async function listCharacters(params: ListQueryParams) {
   const page = Math.max(params.page ?? 1, 1);
   const limit = Math.min(Math.max(params.limit ?? 20, 1), 100);
   const skip = (page - 1) * limit;
-  const sortField = params.sort ?? 'created_at';
-  const sortOrder = (params.order ?? 'desc').toUpperCase() as 'ASC' | 'DESC';
+  const ALLOWED_SORT_FIELDS = ['created_at', 'updated_at', 'downloads', 'views', 'rating', 'name'];
+  const sortField = ALLOWED_SORT_FIELDS.includes(params.sort ?? '') ? params.sort! : 'created_at';
+  const sortOrder = (params.order === 'asc' ? 'ASC' : 'DESC') as 'ASC' | 'DESC';
 
   const where: Record<string, any> = {};
 
@@ -23,11 +24,16 @@ export async function listCharacters(params: ListQueryParams) {
     where.name = ILike(`%${params.search}%`);
   }
 
+  if (params.ownerId) {
+    where.owner_id = params.ownerId;
+  }
+
   const [characters, total] = await repo().findAndCount({
     where,
     order: { [sortField]: sortOrder },
     skip,
     take: limit,
+    relations: ['owner'],
   });
 
   return {
@@ -50,10 +56,12 @@ export async function getCharacterById(id: string) {
 export async function createCharacter(
   data: ValidatedCharacterData,
   imagePath: string | undefined,
+  ownerId?: string | null,
 ) {
   const character = repo().create({
     ...data,
     image_path: imagePath ?? null,
+    owner_id: ownerId ?? null,
     nickname: data.nickname ?? null,
     creator_notes_multilingual: data.creator_notes_multilingual ?? null,
     source: data.source ?? null,

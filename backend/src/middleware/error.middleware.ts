@@ -1,5 +1,6 @@
 import type { Context, Next } from 'hono';
 import { logger } from '../utils/logger.ts';
+import { env } from '../env.ts';
 
 export async function errorHandler(c: Context, next: Next) {
   try {
@@ -8,11 +9,13 @@ export async function errorHandler(c: Context, next: Next) {
     logger.error('Request error:', error);
 
     const statusCode = error.statusCode || error.status || 500;
-    const message = error.message || 'Internal server error';
+    const message = env.NODE_ENV === 'production' && statusCode >= 500
+      ? 'Internal server error'
+      : (error.message || 'Internal server error');
 
     return c.json(
       {
-        error: error.name || 'Error',
+        error: statusCode >= 500 ? 'Internal Server Error' : (error.name || 'Error'),
         message,
         statusCode,
       },

@@ -21,7 +21,8 @@ async function start() {
     logger.info(`Server running on http://localhost:${server.port}`);
     logger.info(`Environment: ${env.NODE_ENV}`);
   } catch (error) {
-    logger.error('Failed to start server:', error);
+    console.error('Failed to start server:', error);
+    if (error instanceof Error) console.error(error.stack);
     process.exit(1);
   }
 }

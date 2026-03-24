@@ -41,4 +41,5 @@ export interface ListQueryParams {
   search?: string;
   tags?: string;
   nsfw?: boolean;
+  ownerId?: string;
 }

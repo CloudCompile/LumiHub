@@ -1,0 +1,134 @@
+.loginButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: var(--lumihub-primary-015);
+  border: 1px solid var(--lumihub-primary-020);
+  border-radius: 8px;
+  color: var(--lumihub-primary-text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.loginButton:hover {
+  background: var(--lumihub-primary-020);
+  border-color: var(--lumihub-primary-050);
+}
+
+.wrapper {
+  position: relative;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 4px 4px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.trigger:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--lumihub-border);
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: var(--lumihub-avatar-border);
+  box-shadow: 0 0 8px var(--lumihub-primary-glow);
+}
+
+.avatarFallback {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--lumihub-primary-020);
+  color: var(--lumihub-primary-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  border: var(--lumihub-avatar-border);
+}
+
+.username {
+  color: var(--lumihub-text);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.chevron {
+  color: var(--lumihub-text-muted);
+  transition: transform 0.15s ease;
+}
+
+.chevronOpen {
+  color: var(--lumihub-text-muted);
+  transition: transform 0.15s ease;
+  transform: rotate(180deg);
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 160px;
+  background: var(--lumihub-bg-elevated);
+  border: 1px solid var(--lumihub-border);
+  border-radius: 10px;
+  box-shadow: var(--lumihub-shadow-md);
+  padding: 4px;
+  z-index: 1100;
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: var(--lumihub-text);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.dropdownItem:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.dropdownItem svg {
+  color: var(--lumihub-text-muted);
+}
+
+@media (max-width: 768px) {
+  .username {
+    display: none;
+  }
+
+  .chevron,
+  .chevronOpen {
+    display: none;
+  }
+
+  .trigger {
+    padding: 4px;
+  }
+}

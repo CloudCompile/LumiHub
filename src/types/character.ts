@@ -34,6 +34,7 @@ export interface LumiHubCharacter {
   modification_date: number | null;
   image_path: string | null;
   downloads: number;
+  owner?: { id: string, discord_id: string, username: string, avatar: string | null } | null;
   created_at: string;
   updated_at: string;
 }
@@ -45,6 +46,8 @@ export interface UnifiedCharacterCard {
   id: string;
   name: string;
   creator: string;
+  creatorUsername?: string;
+  creatorDiscordId?: string;
   tagline: string;
   tags: string[];
   nsfw: boolean;
@@ -71,7 +74,9 @@ export function fromLumiHub(char: LumiHubCharacter): UnifiedCharacterCard {
   return {
     id: char.id,
     name: char.name,
-    creator: char.creator || 'Unknown',
+    creator: char.owner?.username || char.creator || 'Unknown',
+    creatorUsername: char.owner?.username,
+    creatorDiscordId: char.owner?.discord_id,
     tagline: char.description?.slice(0, 200) || char.creator_notes || '',
     tags: char.tags,
     nsfw: char.tags.some((t) => t.toLowerCase() === 'nsfw'),

@@ -121,17 +121,21 @@ export const uploadMiddleware: MiddlewareHandler<UploadEnv> = async (c, next) =>
   const imageFile = formData.get('image');
 
   if (imageFile && imageFile instanceof File) {
-    if (!ALLOWED_MIME_TYPES.IMAGE.includes(imageFile.type as any)) {
-      return c.json(
-        { error: 'Bad Request', message: `Image must be one of: ${ALLOWED_MIME_TYPES.IMAGE.join(', ')}`, statusCode: 400 },
-        400,
-      );
-    }
-
     if (imageFile.size > FILE_SIZE_LIMITS.IMAGE) {
       const limitMB = (FILE_SIZE_LIMITS.IMAGE / 1024 / 1024).toFixed(0);
       return c.json(
         { error: 'Bad Request', message: `Image exceeds ${limitMB} MB limit`, statusCode: 400 },
+        400,
+      );
+    }
+
+    const buffer = Buffer.from(await imageFile.arrayBuffer());
+
+    // check if png
+    const PNG_MAGIC = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+    if (buffer.length < 8 || !PNG_MAGIC.every((b, i) => buffer[i] === b)) {
+      return c.json(
+        { error: 'Bad Request', message: 'Image must be a valid PNG file', statusCode: 400 },
         400,
       );
     }
@@ -141,7 +145,6 @@ export const uploadMiddleware: MiddlewareHandler<UploadEnv> = async (c, next) =>
     await mkdir(dir, { recursive: true });
 
     const filePath = path.join(dir, filename);
-    const buffer = Buffer.from(await imageFile.arrayBuffer());
     await Bun.write(filePath, buffer);
 
     const relativePath = `${UPLOAD_PATHS.CHARACTERS}/${filename}`;

@@ -1,0 +1,125 @@
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Users, Book, Palette, Sparkles, ArrowRight, Plug, Zap, Shield, TrendingUp } from 'lucide-react';
+import { getTrendingCharacters } from '../../api/chub';
+import { fromChub, type UnifiedCharacterCard } from '../../types/character';
+import CharacterCard from '../../components/characters/CharacterCard';
+import styles from './Home.module.css';
+
+const Home = () => {
+  const navigate = useNavigate();
+  const [trending, setTrending] = useState<UnifiedCharacterCard[]>([]);
+  const [trendingLoading, setTrendingLoading] = useState(true);
+
+  useEffect(() => {
+    getTrendingCharacters(12)
+      .then((cards) => setTrending(cards.map(fromChub)))
+      .catch((err) => console.error('Failed to fetch trending:', err))
+      .finally(() => setTrendingLoading(false));
+  }, []);
+
+  return (
+    <div className={styles.page}>
+
+      {/* Compact Hero */}
+      <div className={styles.heroContainer}>
+        <section className={styles.hero}>
+          <h1 className={styles.heroTitle}>
+            Welcome to <span className={styles.heroAccent}>LumiHub</span>
+          </h1>
+          <p className={styles.heroSub}>
+            I'm Lumia's pink-haired twin. Discover, share, and effortlessly install assets directly into your local universe.
+          </p>
+          <div className={styles.heroCtas}>
+            <Link to="/characters" className={styles.ctaPrimary}>
+              Browse Characters
+              <ArrowRight size={16} />
+            </Link>
+          </div>
+        </section>
+        <img src="/lumihub-mascot.png" alt="LumiHub Mascot" className={styles.heroMascot} />
+      </div>
+
+      {/* Trending Characters */}
+      <section className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <TrendingUp size={18} className={styles.sectionIcon} />
+          <h2 className={styles.sectionTitle}>Trending</h2>
+          <Link to="/characters" className={styles.seeAll}>
+            See all <ArrowRight size={14} />
+          </Link>
+        </div>
+
+        <div className={styles.trendingRow}>
+          {trendingLoading ? (
+            Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className={styles.trendingSkeleton} />
+            ))
+          ) : trending.length > 0 ? (
+            trending.map((card) => (
+              <div key={card.id} className={styles.trendingCard}>
+                <CharacterCard
+                  card={card}
+                  onClick={() => navigate(`/characters/${encodeURIComponent(card.id)}`, { state: { card } })}
+                />
+              </div>
+            ))
+          ) : (
+            <p className={styles.trendingEmpty}>No trending characters available right now.</p>
+          )}
+        </div>
+      </section>
+
+      {/* Category Chips */}
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Browse by type</h2>
+        <div className={styles.categoryChips}>
+          <Link to="/characters" className={styles.chip}>
+            <Users size={16} />
+            Characters
+          </Link>
+          <Link to="/worldbooks" className={styles.chip}>
+            <Book size={16} />
+            Worldbooks
+          </Link>
+          <Link to="/themes" className={styles.chip}>
+            <Palette size={16} />
+            Themes
+          </Link>
+          <span className={`${styles.chip} ${styles.chipDisabled}`}>
+            <Sparkles size={16} />
+            Presets
+            <span className={styles.chipSoon}>Soon</span>
+          </span>
+        </div>
+      </section>
+
+      {/* Hub Connector — slim banner */}
+      <section className={styles.connectorBanner}>
+        <div className={styles.connectorLeft}>
+          <div className={styles.connectorIconWrap}>
+            <Plug size={20} />
+          </div>
+          <div>
+            <h3 className={styles.connectorTitle}>Hub Connector</h3>
+            <p className={styles.connectorDesc}>
+              Install the extension in Lumiverse for one-click asset delivery.
+            </p>
+          </div>
+        </div>
+        <div className={styles.connectorFeatures}>
+          <div className={styles.connectorFeature}>
+            <Zap size={14} />
+            <span>Instant install</span>
+          </div>
+          <div className={styles.connectorFeature}>
+            <Shield size={14} />
+            <span>Secure</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export default Home;

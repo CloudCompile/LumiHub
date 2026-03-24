@@ -1,26 +1,15 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+import { Entity, Column } from 'typeorm';
 import type { CharacterAsset, Lorebook } from '../types/character.ts';
+import { BaseAsset } from './BaseAsset.entity.ts';
 
-/** Persistent character card entity backed by PostgreSQL. */
+/**
+ * Persistent character card entity backed by PostgreSQL.
+ * Inherits standard fields (id, name, description, owner, downloads, dates) from BaseAsset.
+ */
 @Entity('characters')
-export class Character {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
-  @Column({ type: 'varchar', length: 255 })
-  name: string;
-
+export class Character extends BaseAsset {
   @Column({ type: 'varchar', length: 255, nullable: true })
   nickname: string | null;
-
-  @Column({ type: 'text', default: '' })
-  description: string;
 
   @Column({ type: 'text', default: '' })
   personality: string;
@@ -78,16 +67,4 @@ export class Character {
 
   @Column({ type: 'bigint', nullable: true })
   modification_date: number | null;
-
-  @Column({ type: 'varchar', length: 512, nullable: true })
-  image_path: string | null;
-
-  @Column({ type: 'int', default: 0 })
-  downloads: number;
-
-  @CreateDateColumn()
-  created_at: Date;
-
-  @UpdateDateColumn()
-  updated_at: Date;
 }
