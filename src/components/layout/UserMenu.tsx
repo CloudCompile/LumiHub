@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { LogIn, LogOut, User, ChevronDown } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth, useAuthStore } from '../../hooks/useAuth';
 import styles from './UserMenu.module.css';
 
 const UserMenu: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth();
+  const resetAuth = useAuthStore((s) => s.reset);
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -20,6 +21,7 @@ const UserMenu: React.FC = () => {
   }, []);
 
   const handleLogin = () => {
+    resetAuth(); 
     window.location.href = '/api/v1/auth/discord';
   };
 

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Users, Book, Palette, Sparkles, ArrowRight, Plug, Zap, Shield, TrendingUp } from 'lucide-react';
-import { getTrendingCharacters } from '../../api/chub';
-import { fromChub, type UnifiedCharacterCard } from '../../types/character';
+import { listCharacters } from '../../api/characters';
+import { fromLumiHub, type UnifiedCharacterCard } from '../../types/character';
 import CharacterCard from '../../components/characters/CharacterCard';
 import styles from './Home.module.css';
 
@@ -12,9 +12,9 @@ const Home = () => {
   const [trendingLoading, setTrendingLoading] = useState(true);
 
   useEffect(() => {
-    getTrendingCharacters(12)
-      .then((cards) => setTrending(cards.map(fromChub)))
-      .catch((err) => console.error('Failed to fetch trending:', err))
+    listCharacters({ sort: 'downloads', order: 'desc', limit: 12 })
+      .then((res) => setTrending(res.data.map(fromLumiHub)))
+      .catch((err) => console.error('Failed to fetch popular characters:', err))
       .finally(() => setTrendingLoading(false));
   }, []);
 
@@ -44,7 +44,7 @@ const Home = () => {
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
           <TrendingUp size={18} className={styles.sectionIcon} />
-          <h2 className={styles.sectionTitle}>Trending</h2>
+          <h2 className={styles.sectionTitle}>Popular</h2>
           <Link to="/characters" className={styles.seeAll}>
             See all <ArrowRight size={14} />
           </Link>

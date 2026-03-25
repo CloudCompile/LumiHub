@@ -1,5 +1,4 @@
 import { BrowserRouter, Routes, Route } from 'react-router';
-import { useAuth } from './hooks/useAuth';
 import Layout from './components/layout/Layout';
 import Home from './pages/home/Home';
 import Characters from './pages/characters/Characters';
@@ -7,8 +6,6 @@ import CharacterDetail from './pages/characters/CharacterDetail';
 import UserProfile from './pages/user/UserProfile';
 
 function App() {
-  useAuth();
-
   return (
     <BrowserRouter>
       <Routes>

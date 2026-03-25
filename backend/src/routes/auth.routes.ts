@@ -124,7 +124,17 @@ auth.post('/refresh', async (c) => {
         sameSite: 'Strict'
     });
 
-    return c.json({ message: "Token refreshed" }, 200);
+    return c.json({
+        user: {
+            id: user.id,
+            discordId: user.discord_id,
+            username: user.username,
+            displayName: user.display_name,
+            avatar: user.avatar,
+            banner: user.banner,
+            createdAt: user.created_at
+        }
+    }, 200);
 });
 
 /** Logout: clear cookies and nullify refresh token in DB */
