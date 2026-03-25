@@ -281,13 +281,13 @@ link.post('/install-worldbook', requireAuth, async (c) => {
     let payload: Record<string, unknown>;
 
     if (source === 'chub') {
-        // Chub lorebook — send the Chub API URL for Lumiverse to fetch
+        // Chub lorebook — send the gateway URL for Lumiverse to fetch
         const apiPath = worldbook_id.replace(/^lorebooks\//, '');
         payload = {
             source: 'chub',
             worldbookId: worldbook_id,
             worldbookName: worldbook_id,
-            importUrl: `https://api.chub.ai/api/lorebooks/${apiPath}?full=true`,
+            importUrl: `https://gateway.chub.ai/api/lorebooks/${apiPath}?full=true`,
         };
     } else {
         // LumiHub worldbook — send inline entries
