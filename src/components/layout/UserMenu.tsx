@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { LogIn, LogOut, User, ChevronDown } from 'lucide-react';
 import { useAuth, useAuthStore } from '../../hooks/useAuth';
+import LazyImage from '../shared/LazyImage';
 import styles from './UserMenu.module.css';
 
 const UserMenu: React.FC = () => {
@@ -38,7 +39,7 @@ const UserMenu: React.FC = () => {
     <div className={styles.wrapper} ref={menuRef}>
       <button className={styles.trigger} onClick={() => setOpen(!open)}>
         {user.avatar ? (
-          <img src={user.avatar} alt={user.displayName} className={styles.avatar} />
+          <LazyImage src={user.avatar} alt={user.displayName} className={styles.avatar} containerClassName={styles.avatar} spinnerSize={14} />
         ) : (
           <div className={styles.avatarFallback}>
             {user.displayName.charAt(0).toUpperCase()}

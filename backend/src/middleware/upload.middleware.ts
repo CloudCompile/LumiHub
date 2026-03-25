@@ -19,33 +19,20 @@ const characterAssetSchema = z.object({
   ext: z.string(),
 });
 
+// Lorebook schemas are intentionally permissive — CCSv3 cards use numeric
+// positions, optional use_regex, and many extra fields across different
+// card generators. Since this is stored as JSONB, we validate the outer
+// shape but pass through entry fields freely.
 const lorebookEntrySchema = z.object({
-  keys: z.array(z.string()),
-  content: z.string(),
-  extensions: z.record(z.any()).default({}),
-  enabled: z.boolean(),
-  insertion_order: z.number(),
-  case_sensitive: z.boolean().optional(),
-  use_regex: z.boolean(),
-  constant: z.boolean().optional(),
-  name: z.string().optional(),
-  priority: z.number().optional(),
-  id: z.union([z.number(), z.string()]).optional(),
-  comment: z.string().optional(),
-  selective: z.boolean().optional(),
-  secondary_keys: z.array(z.string()).optional(),
-  position: z.enum(['before_char', 'after_char']).optional(),
-});
+  keys: z.array(z.string()).default([]),
+  content: z.string().default(''),
+  enabled: z.boolean().default(true),
+  insertion_order: z.number().default(100),
+}).passthrough();
 
 const lorebookSchema = z.object({
-  name: z.string().optional(),
-  description: z.string().optional(),
-  scan_depth: z.number().optional(),
-  token_budget: z.number().optional(),
-  recursive_scanning: z.boolean().optional(),
-  extensions: z.record(z.any()).default({}),
   entries: z.array(lorebookEntrySchema),
-});
+}).passthrough();
 
 /** Zod schema for validating the `character_data` JSON payload (CCv3 spec). */
 export const characterDataSchema = z.object({

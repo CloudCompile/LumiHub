@@ -1,26 +1,48 @@
 import { useEffect, useState } from 'react';
 import { useParams, useLocation, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Download, Star, Users, ExternalLink, Image, FileText, Package } from 'lucide-react';
+import { ArrowLeft, Download, Star, Users, ExternalLink, Image, FileText, Package, Trash2 } from 'lucide-react';
 import { useCharacterImages } from '../../hooks/useCharacterImages';
+import { useAuth } from '../../hooks/useAuth';
+import { useQueryClient } from '@tanstack/react-query';
 import type { UnifiedCharacterCard } from '../../types/character';
 import type { ChubCharacterCard } from '../../types/chub';
 import type { LumiHubCharacter } from '../../types/character';
-import { getCharacter } from '../../api/characters';
+import { getCharacter, deleteCharacter } from '../../api/characters';
 import { fromLumiHub } from '../../types/character';
 import CharacterTabs from '../../components/characters/CharacterTabs';
 import InstallButton from '../../components/characters/InstallButton';
+import LazyImage from '../../components/shared/LazyImage';
 import styles from './CharacterDetail.module.css';
+
+function normalizeImagePath(p: string | null): string | null {
+  if (!p) return null;
+  let n = p.replace(/\\/g, '/');
+  if (!n.startsWith('uploads/')) n = `uploads/${n}`;
+  return `/${n}`;
+}
 
 const CharacterDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const passedCard = (location.state as { card?: UnifiedCharacterCard })?.card ?? null;
 
   const [card, setCard] = useState<UnifiedCharacterCard | null>(passedCard);
   const [loading, setLoading] = useState(!passedCard);
   const [error, setError] = useState<string | null>(null);
+  const [heroUrl, setHeroUrl] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  // Derive character data (may be null while loading)
+  const isChub = card?.source === 'chub';
+  const chubData = isChub ? (card?.raw as ChubCharacterCard) : null;
+  const lumiData = !isChub && card ? (card.raw as LumiHubCharacter) : null;
+
+  // Hooks must be called unconditionally (before any early returns)
+  const { data: images } = useCharacterImages(lumiData?.id);
 
   useEffect(() => {
     if (passedCard || !id) return;
@@ -55,23 +77,11 @@ const CharacterDetail: React.FC = () => {
     );
   }
 
-  const isChub = card.source === 'chub';
-  const chubData = isChub ? (card.raw as ChubCharacterCard) : null;
-  const lumiData = !isChub ? (card.raw as LumiHubCharacter) : null;
-  const [heroUrl, setHeroUrl] = useState<string | null>(null);
-
-  const { data: images } = useCharacterImages(lumiData?.id);
   const altAvatars = images?.filter((img) => img.image_type === 'avatar_alt') ?? [];
   const hasCharxAssets = (images?.length ?? 0) > 1;
+  const isOwner = !isChub && user && lumiData?.owner?.id === user.id;
 
   const displayAvatar = heroUrl || card.avatarUrl;
-
-  function normalizeImagePath(p: string | null): string | null {
-    if (!p) return null;
-    let n = p.replace(/\\/g, '/');
-    if (!n.startsWith('uploads/')) n = `uploads/${n}`;
-    return `/${n}`;
-  }
 
   const formattedDownloads = card.downloads > 1000
     ? `${(card.downloads / 1000).toFixed(1)}k`
@@ -86,6 +96,19 @@ const CharacterDetail: React.FC = () => {
     }
   };
 
+  const handleDelete = async () => {
+    if (!lumiData || !confirm(`Delete "${card.name}"? This cannot be undone.`)) return;
+    setDeleting(true);
+    try {
+      await deleteCharacter(lumiData.id);
+      queryClient.invalidateQueries({ queryKey: ['characters'] });
+      navigate('/characters');
+    } catch (err) {
+      console.error('Delete failed:', err);
+      setDeleting(false);
+    }
+  };
+
   return (
     <div className={styles.page}>
       <button className={styles.backBtn} onClick={() => navigate(-1)}>
@@ -97,7 +120,12 @@ const CharacterDetail: React.FC = () => {
         <div className={styles.imageColumn}>
           <div className={styles.imageWrap}>
             {displayAvatar ? (
-              <img src={displayAvatar} alt={card.name} className={styles.image} />
+              <LazyImage
+                src={displayAvatar}
+                alt={card.name}
+                className={styles.image}
+                fallback={<div className={styles.imagePlaceholder}>{card.name.charAt(0)}</div>}
+              />
             ) : (
               <div className={styles.imagePlaceholder}>{card.name.charAt(0)}</div>
             )}
@@ -143,8 +171,11 @@ const CharacterDetail: React.FC = () => {
           <div className={styles.stats}>
             <span className={styles.statChip}><Download size={13} />{formattedDownloads} downloads</span>
             {card.rating !== null && <span className={styles.statChip}><Star size={13} />{card.rating.toFixed(1)}</span>}
-            {isChub && chubData?.interactions !== undefined && (
-              <span className={styles.statChip}><Users size={13} />{chubData.interactions.toLocaleString()} chats</span>
+            {isChub && chubData?.starCount !== undefined && (
+              <span className={styles.statChip}><Star size={13} />{chubData.starCount.toLocaleString()} stars</span>
+            )}
+            {isChub && chubData?.chats !== undefined && (
+              <span className={styles.statChip}><Users size={13} />{chubData.chats.toLocaleString()} chats</span>
             )}
             {chubData?.tokenCount !== undefined && (
               <span className={styles.statChip}><FileText size={13} />{chubData.tokenCount.toLocaleString()} tokens</span>
@@ -185,6 +216,12 @@ const CharacterDetail: React.FC = () => {
                   <a href={`/api/v1/characters/${card.id}/charx`} download className={styles.secondaryBtn}>
                     <Package size={14} /> .charx
                   </a>
+                )}
+                {isOwner && (
+                  <button className={styles.dangerBtn} onClick={handleDelete} disabled={deleting}>
+                    <Trash2 size={14} />
+                    {deleting ? 'Deleting...' : 'Delete'}
+                  </button>
                 )}
               </>
             )}

@@ -17,12 +17,15 @@
   max-width: 640px;
 }
 
-.heroMascot {
+.heroMascotWrap {
   flex-shrink: 0;
   width: 280px;
-  height: auto;
   filter: drop-shadow(0 0 20px rgba(216, 140, 154, 0.25));
   animation: float 6s ease-in-out infinite;
+}
+
+.heroMascot {
+  height: auto;
 }
 
 @keyframes float {
@@ -315,7 +318,7 @@
     gap: 24px;
   }
 
-  .heroMascot {
+  .heroMascotWrap {
     width: 220px;
     align-self: center;
   }

@@ -28,20 +28,6 @@ characters.get('/', async (c) => {
   return c.json(result);
 });
 
-/** Get full character details */
-characters.get('/:id', async (c) => {
-  const character = await CharacterService.getCharacterById(c.req.param('id'));
-
-  if (!character) {
-    return c.json(
-      { error: 'Not Found', message: 'Character not found', statusCode: 404 },
-      404,
-    );
-  }
-
-  return c.json({ data: character });
-});
-
 /** Create character (requires login) */
 characters.post('/', requireAuth, uploadMiddleware, async (c) => {
   const data = c.get('characterData');
@@ -56,41 +42,19 @@ characters.post('/', requireAuth, uploadMiddleware, async (c) => {
   );
 });
 
-/** Update character */
-characters.put('/:id', requireAuth, uploadMiddleware, async (c) => {
-  const id = c.req.param('id');
-  const userId = c.get('userId');
-
-  const existing = await CharacterService.getCharacterById(id);
-  if (!existing) {
-    return c.json({ error: 'Not Found', message: 'Character not found', statusCode: 404 }, 404);
-  }
-  if (existing.owner_id !== userId) {
-    return c.json({ error: 'Forbidden', message: 'You do not own this character', statusCode: 403 }, 403);
-  }
-
+/** Import character from .charx file (requires login) */
+characters.post('/charx', requireAuth, charxUploadMiddleware, async (c) => {
   const data = c.get('characterData');
   const imagePath = c.get('imagePath');
-  const updated = await CharacterService.updateCharacter(id, data, imagePath);
+  const charxImages = c.get('charxImages');
+  const lumiverseModules = c.get('lumiverseModules');
+  const ownerId = c.get('userId');
 
-  return c.json({ data: updated, message: 'Character updated successfully' });
-});
+  const character = await CharacterService.createCharacterFromCharx(
+    data, imagePath, charxImages, lumiverseModules, ownerId,
+  );
 
-/** Delete character */
-characters.delete('/:id', requireAuth, async (c) => {
-  const id = c.req.param('id');
-  const userId = c.get('userId');
-
-  const existing = await CharacterService.getCharacterById(id);
-  if (!existing) {
-    return c.json({ error: 'Not Found', message: 'Character not found', statusCode: 404 }, 404);
-  }
-  if (existing.owner_id !== userId) {
-    return c.json({ error: 'Forbidden', message: 'You do not own this character', statusCode: 403 }, 403);
-  }
-
-  await CharacterService.deleteCharacter(id);
-  return c.json({ message: 'Character deleted successfully' });
+  return c.json({ id: character.id, message: 'Character imported from .charx' }, 201);
 });
 
 /** Export character as CCSv3 JSON card (public, no auth required). */
@@ -150,21 +114,6 @@ characters.get('/:id/card', async (c) => {
   return c.json({ card, avatarBase64, avatarMime });
 });
 
-/** Import character from .charx file (requires login) */
-characters.post('/charx', requireAuth, charxUploadMiddleware, async (c) => {
-  const data = c.get('characterData');
-  const imagePath = c.get('imagePath');
-  const charxImages = c.get('charxImages');
-  const lumiverseModules = c.get('lumiverseModules');
-  const ownerId = c.get('userId');
-
-  const character = await CharacterService.createCharacterFromCharx(
-    data, imagePath, charxImages, lumiverseModules, ownerId,
-  );
-
-  return c.json({ id: character.id, message: 'Character imported from .charx' }, 201);
-});
-
 /** Get all images for a character (public) */
 characters.get('/:id/images', async (c) => {
   const character = await CharacterService.getCharacterById(c.req.param('id'));
@@ -188,6 +137,9 @@ characters.get('/:id/charx', async (c) => {
     return c.json({ error: 'Server Error', message: 'Failed to build archive', statusCode: 500 }, 500);
   }
 
+  // Count as a download
+  await CharacterService.incrementDownloads(c.req.param('id')).catch(() => {});
+
   const filename = CharacterService.sanitizeFilename(character.name) + '.charx';
   return new Response(archive, {
     headers: {
@@ -209,6 +161,57 @@ characters.post('/:id/download', async (c) => {
   }
 
   return c.json(result);
+});
+
+/** Update character */
+characters.put('/:id', requireAuth, uploadMiddleware, async (c) => {
+  const id = c.req.param('id');
+  const userId = c.get('userId');
+
+  const existing = await CharacterService.getCharacterById(id);
+  if (!existing) {
+    return c.json({ error: 'Not Found', message: 'Character not found', statusCode: 404 }, 404);
+  }
+  if (existing.owner_id !== userId) {
+    return c.json({ error: 'Forbidden', message: 'You do not own this character', statusCode: 403 }, 403);
+  }
+
+  const data = c.get('characterData');
+  const imagePath = c.get('imagePath');
+  const updated = await CharacterService.updateCharacter(id, data, imagePath);
+
+  return c.json({ data: updated, message: 'Character updated successfully' });
+});
+
+/** Delete character */
+characters.delete('/:id', requireAuth, async (c) => {
+  const id = c.req.param('id');
+  const userId = c.get('userId');
+
+  const existing = await CharacterService.getCharacterById(id);
+  if (!existing) {
+    return c.json({ error: 'Not Found', message: 'Character not found', statusCode: 404 }, 404);
+  }
+  if (existing.owner_id !== userId) {
+    return c.json({ error: 'Forbidden', message: 'You do not own this character', statusCode: 403 }, 403);
+  }
+
+  await CharacterService.deleteCharacter(id);
+  return c.json({ message: 'Character deleted successfully' });
+});
+
+/** Get full character details — MUST be last /:id route to avoid catching sub-paths */
+characters.get('/:id', async (c) => {
+  const character = await CharacterService.getCharacterById(c.req.param('id'));
+
+  if (!character) {
+    return c.json(
+      { error: 'Not Found', message: 'Character not found', statusCode: 404 },
+      404,
+    );
+  }
+
+  return c.json({ data: character });
 });
 
 export default characters;

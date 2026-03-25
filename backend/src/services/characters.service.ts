@@ -1,4 +1,3 @@
-import { ILike } from 'typeorm';
 import { unlink } from 'node:fs/promises';
 import path from 'node:path';
 import { zipSync } from 'fflate';
@@ -22,23 +21,31 @@ export async function listCharacters(params: ListQueryParams) {
   const sortField = ALLOWED_SORT_FIELDS.includes(params.sort ?? '') ? params.sort! : 'created_at';
   const sortOrder = (params.order === 'asc' ? 'ASC' : 'DESC') as 'ASC' | 'DESC';
 
-  const where: Record<string, any> = {};
+  const qb = repo().createQueryBuilder('character')
+    .leftJoinAndSelect('character.owner', 'owner')
+    .orderBy(`character.${sortField}`, sortOrder)
+    .skip(skip)
+    .take(limit);
 
   if (params.search) {
-    where.name = ILike(`%${params.search}%`);
+    qb.andWhere('character.name ILIKE :search', { search: `%${params.search}%` });
   }
 
   if (params.ownerId) {
-    where.owner_id = params.ownerId;
+    qb.andWhere('character.owner_id = :ownerId', { ownerId: params.ownerId });
   }
 
-  const [characters, total] = await repo().findAndCount({
-    where,
-    order: { [sortField]: sortOrder },
-    skip,
-    take: limit,
-    relations: ['owner'],
-  });
+  if (params.tags) {
+    const tagArray = params.tags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+    if (tagArray.length > 0) {
+      qb.andWhere(
+        `EXISTS (SELECT 1 FROM jsonb_array_elements_text(character.tags) AS t WHERE LOWER(t) IN (:...tagValues))`,
+        { tagValues: tagArray },
+      );
+    }
+  }
+
+  const [characters, total] = await qb.getManyAndCount();
 
   return {
     data: characters,

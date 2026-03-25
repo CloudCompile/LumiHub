@@ -35,6 +35,7 @@ const CreateCharacterModal: React.FC<Props> = ({ onClose }) => {
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [autofilled, setAutofilled] = useState(false);
+  const [nsfw, setNsfw] = useState(false);
 
   // Charx state
   const [charxData, setCharxData] = useState<ParsedCharx | null>(null);
@@ -137,7 +138,8 @@ const CreateCharacterModal: React.FC<Props> = ({ onClose }) => {
     setCreator(card.creator || creator);
     setCreatorNotes(card.creator_notes || creatorNotes);
     if (card.tags.length > 0) {
-      setTags(card.tags.join(', '));
+      setTags(card.tags.filter((t) => t.toLowerCase() !== 'nsfw').join(', '));
+      if (card.tags.some((t) => t.toLowerCase() === 'nsfw')) setNsfw(true);
     }
   };
 
@@ -153,16 +155,19 @@ const CreateCharacterModal: React.FC<Props> = ({ onClose }) => {
     setError(null);
 
     try {
+      const parsedTags = tags
+        .split(',')
+        .map((t) => t.trim())
+        .filter((t) => t && t.toLowerCase() !== 'nsfw');
+      if (nsfw) parsedTags.push('NSFW');
+
       const characterData = {
         name: name.trim(),
         description,
         personality,
         scenario,
         first_mes: firstMes,
-        tags: tags
-          .split(',')
-          .map((t) => t.trim())
-          .filter(Boolean),
+        tags: parsedTags,
         creator,
         creator_notes: creatorNotes,
         // Include raw card data for charx (extensions, character_book, etc.)
@@ -437,6 +442,17 @@ const CreateCharacterModal: React.FC<Props> = ({ onClose }) => {
                 />
               </div>
             </div>
+
+            <label className={styles.nsfwToggle}>
+              <input
+                type="checkbox"
+                checked={nsfw}
+                onChange={(e) => setNsfw(e.target.checked)}
+                className={styles.nsfwCheckbox}
+              />
+              <span className={styles.nsfwLabel}>Mark as NSFW</span>
+              <span className={styles.nsfwHint}>Enable if this character contains adult or explicit content</span>
+            </label>
 
             {error && (
               <div className={styles.errorBox}>

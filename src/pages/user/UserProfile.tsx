@@ -4,6 +4,7 @@ import { User, Calendar, Shield, LayoutGrid, Users, Settings, Palette } from 'lu
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { useCharacters } from '../../hooks/useCharacters';
 import CharacterCard from '../../components/characters/CharacterCard';
+import LazyImage from '../../components/shared/LazyImage';
 import styles from './UserProfile.module.css';
 
 type FilterTab = 'characters' | 'worldbooks' | 'presets' | 'themes';
@@ -49,7 +50,7 @@ const UserProfile = () => {
       {/* banner */}
       <div className={styles.banner}>
         {profile.banner ? (
-          <img src={profile.banner} alt="" className={styles.bannerImage} />
+          <LazyImage src={profile.banner} alt="" className={styles.bannerImage} />
         ) : (
           <div className={styles.bannerFallback} />
         )}
@@ -60,7 +61,7 @@ const UserProfile = () => {
       <div className={styles.profileHeader}>
         <div className={styles.avatarWrapper}>
           {profile.avatar ? (
-            <img src={profile.avatar} alt={profile.displayName || profile.username} className={styles.avatar} />
+            <LazyImage src={profile.avatar} alt={profile.displayName || profile.username} className={styles.avatar} />
           ) : (
             <div className={styles.avatarFallback}>
               {(profile.displayName || profile.username).charAt(0).toUpperCase()}
@@ -144,14 +145,14 @@ const UserProfile = () => {
           <div className={styles.emptyState}>
             <Settings size={40} opacity={0.4} />
             <h3>No Presets Yet</h3>
-            <p>Generation presets will appear here.</p>
+            <p>When preset sharing launches, this creator's published generation settings will appear here.</p>
           </div>
         )}
         {activeTab === 'themes' && (
           <div className={styles.emptyState}>
             <Palette size={40} opacity={0.4} />
             <h3>No Themes Yet</h3>
-            <p>UI themes and color palettes will appear here.</p>
+            <p>When theme support launches, this creator's custom color palettes and UI themes will appear here.</p>
           </div>
         )}
       </div>

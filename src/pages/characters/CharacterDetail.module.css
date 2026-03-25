@@ -238,6 +238,30 @@
   color: var(--lumihub-text);
 }
 
+.dangerBtn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 14px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ef4444;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.dangerBtn:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.dangerBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .loadingState {
   display: flex;
   justify-content: center;

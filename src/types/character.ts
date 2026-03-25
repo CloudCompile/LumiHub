@@ -111,7 +111,7 @@ export function fromChub(card: ChubCharacterCard): UnifiedCharacterCard {
     tags: card.tags,
     nsfw: card.nsfw,
     avatarUrl: card.avatarUrl,
-    downloads: 0,
+    downloads: card.starCount ?? 0,
     rating: card.rating ?? null,
     createdAt: card.createdAt ?? null,
     source: 'chub',

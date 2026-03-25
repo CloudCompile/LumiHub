@@ -8,11 +8,11 @@ export interface CharacterAsset {
 export interface LorebookEntry {
   keys: string[];
   content: string;
-  extensions: Record<string, any>;
+  extensions?: Record<string, any>;
   enabled: boolean;
   insertion_order: number;
   case_sensitive?: boolean;
-  use_regex: boolean;
+  use_regex?: boolean;
   constant?: boolean;
   name?: string;
   priority?: number;
@@ -20,7 +20,10 @@ export interface LorebookEntry {
   comment?: string;
   selective?: boolean;
   secondary_keys?: string[];
-  position?: 'before_char' | 'after_char';
+  position?: string | number;
+  depth?: number;
+  match_whole_words?: boolean;
+  [key: string]: unknown;
 }
 
 export interface Lorebook {

@@ -1,16 +1,19 @@
 export interface WorldBookEntry {
   keys: string[];
   content: string;
-  name: string;
+  name?: string;
   enabled: boolean;
-  order: number;
-  priority: number;
-  comment: string;
-  secondary_keys: string[];
-  selective: boolean;
-  constant: boolean;
-  position: number;
-  extensions: Record<string, any>;
+  order?: number;
+  insertion_order?: number;
+  priority?: number;
+  comment?: string;
+  secondary_keys?: string[];
+  selective?: boolean;
+  constant?: boolean;
+  position?: string | number;
+  depth?: number;
+  extensions?: Record<string, any>;
+  [key: string]: unknown;
 }
 
 export interface LumiWorldBook {
@@ -26,17 +29,43 @@ export interface LumiWorldBook {
   updated_at: string;
 }
 
+export interface ChubWorldBook {
+  id: string;
+  fullPath: string;
+  name: string;
+  tagline?: string;
+  description?: string;
+  topics: string[];
+  nsfw: boolean;
+  nsfw_image: boolean;
+  avatarUrl: string;
+  nTokens: number;
+  starCount: number;
+  rating: number;
+  ratingCount: number;
+  favorites: number;
+  forks: number;
+  createdAt: string;
+  lastActivityAt: string;
+}
+
+export type WorldBookSource = 'lumihub' | 'chub';
+
 export interface UnifiedWorldBook {
   id: string;
   name: string;
   description: string;
   entryCount: number;
+  tokenCount: number;
   tags: string[];
+  nsfw: boolean;
   creator: string;
   avatarUrl: string | null;
   downloads: number;
+  rating: number | null;
   createdAt: string | null;
-  raw: LumiWorldBook;
+  source: WorldBookSource;
+  raw: LumiWorldBook | ChubWorldBook;
 }
 
 function normalizeImagePath(path: string | null): string | null {
@@ -54,11 +83,36 @@ export function fromLumiHub(wb: LumiWorldBook): UnifiedWorldBook {
     name: wb.name,
     description: wb.description?.slice(0, 200) || '',
     entryCount: wb.entries?.length ?? 0,
+    tokenCount: 0,
     tags: wb.tags,
+    nsfw: wb.tags.some((t) => t.toLowerCase() === 'nsfw'),
     creator: wb.creator || 'Unknown',
     avatarUrl: normalizeImagePath(wb.image_path),
     downloads: wb.downloads,
+    rating: null,
     createdAt: wb.created_at,
+    source: 'lumihub',
     raw: wb,
+  };
+}
+
+export function fromChubLorebook(lb: ChubWorldBook): UnifiedWorldBook {
+  const creator = lb.fullPath.includes('/') ? lb.fullPath.split('/')[1] : 'Unknown';
+  const hasNsfwTag = lb.topics.some((t) => t.toLowerCase() === 'nsfw');
+  return {
+    id: lb.fullPath,
+    name: lb.name,
+    description: lb.tagline || lb.description || '',
+    entryCount: 0,
+    tokenCount: lb.nTokens,
+    tags: lb.topics,
+    nsfw: lb.nsfw_image || lb.nsfw || hasNsfwTag,
+    creator,
+    avatarUrl: lb.avatarUrl,
+    downloads: lb.starCount,
+    rating: lb.rating ?? null,
+    createdAt: lb.createdAt,
+    source: 'chub',
+    raw: lb,
   };
 }

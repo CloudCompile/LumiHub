@@ -35,7 +35,7 @@ PostgresQueryRunner.prototype.query = function (this: any, ...args: any[]) {
 export const AppDataSource = new DataSource({
   type: 'postgres',
   url: env.DATABASE_URL,
-  synchronize: env.NODE_ENV === 'development',
+  synchronize: true,
   logging: ['error'],
   entities: [Character, User, Worldbook, Preset, Theme, LinkedInstance, LinkCode, CharacterImage],
   extra: { max: 20 },

@@ -2,6 +2,7 @@ import type { UnifiedCharacterCard } from '../../types/character';
 import { Star, Download, Eye } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import LazyImage from '../shared/LazyImage';
 import styles from './CharacterCard.module.css';
 
 interface Props {
@@ -29,11 +30,11 @@ const CharacterCard: React.FC<Props> = ({ card, blurNsfw = true, onClick }) => {
     <div className={styles.card} onClick={onClick}>
       <div className={styles.imageArea}>
         {card.avatarUrl ? (
-          <img
+          <LazyImage
             src={card.avatarUrl}
             alt={card.name}
             className={`${styles.image} ${shouldBlur ? styles.imageBlurred : ''}`}
-            loading="lazy"
+            fallback={<div className={styles.placeholder}>{card.name.charAt(0)}</div>}
           />
         ) : (
           <div className={styles.placeholder}>{card.name.charAt(0)}</div>
@@ -78,7 +79,7 @@ const CharacterCard: React.FC<Props> = ({ card, blurNsfw = true, onClick }) => {
               )}
             </span>
             <span className={styles.downloads}>
-              <Download size={11} />
+              {card.source === 'chub' ? <Star size={11} /> : <Download size={11} />}
               {formattedDownloads}
             </span>
           </div>

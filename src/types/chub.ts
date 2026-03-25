@@ -7,18 +7,22 @@ export interface ChubCharacter {
   topics?: string[];
   nsfw?: boolean;
   nsfw_image?: boolean;
-  n_tokens?: number;
+  nTokens?: number;
   rating?: number;
-  n_interactions?: number;
-  created_at?: string;
-  updated_at?: string;
+  ratingCount?: number;
+  starCount?: number;
+  n_favorites?: number;
+  nChats?: number;
+  nMessages?: number;
+  forksCount?: number;
+  createdAt?: string;
+  lastActivityAt?: string;
 }
 
 export interface ChubSearchResult {
   nodes: ChubCharacter[];
-  count: number;
   page: number;
-  pages: number;
+  hasMore: boolean;
 }
 
 export type ChubSortOption = 'default' | 'rating' | 'trending' | 'created_at' | 'download_count' | 'n_tokens';
@@ -29,8 +33,65 @@ export interface ChubSearchOptions {
   limit?: number;
   sort?: ChubSortOption;
   nsfw?: boolean;
+  nsfl?: boolean;
   tags?: string;
   excludeTags?: string;
+  minTokens?: number;
+  requireImages?: boolean;
+  includeForks?: boolean;
+  venus?: boolean;
+}
+
+export interface ChubCharacterDefinition {
+  name: string;
+  description: string;
+  personality: string;
+  scenario: string;
+  first_message: string | null;
+  system_prompt: string | null;
+  post_history_instructions: string | null;
+  example_dialogs: string | null;
+  alternate_greetings: string[];
+  embedded_lorebook: {
+    entries: ChubLorebookEntry[];
+  } | null;
+  tavern_personality: string | null;
+  extensions: Record<string, unknown>;
+}
+
+export interface ChubLorebookEntry {
+  keys: string[];
+  secondary_keys: string[];
+  content: string;
+  name: string;
+  comment: string;
+  enabled: boolean;
+  priority: number;
+  insertion_order: number;
+  case_sensitive: boolean;
+  selective: boolean;
+  constant: boolean;
+  position: string;
+}
+
+export interface ChubCharacterDetail {
+  node: {
+    fullPath: string;
+    name: string;
+    description: string;
+    tagline: string;
+    topics: string[];
+    starCount: number;
+    nChats: number;
+    nMessages: number;
+    nTokens: number;
+    rating: number;
+    createdAt: string;
+    lastActivityAt: string;
+    creatorId: number;
+    definition: ChubCharacterDefinition | null;
+    related_lorebooks: unknown[];
+  };
 }
 
 export interface ChubCharacterCard {
@@ -48,7 +109,12 @@ export interface ChubCharacterCard {
   downloadUrl: string;
   tokenCount?: number;
   rating?: number;
-  interactions?: number;
+  ratingCount?: number;
+  starCount?: number;
+  favorites?: number;
+  chats?: number;
+  messages?: number;
+  forks?: number;
   createdAt?: string;
-  updatedAt?: string;
+  lastActivityAt?: string;
 }

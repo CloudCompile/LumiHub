@@ -147,6 +147,43 @@
   font-weight: 500;
 }
 
+/* ── NSFW Toggle ── */
+.nsfwToggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--lumihub-glass-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.nsfwToggle:hover {
+  border-color: var(--lumihub-primary-020);
+}
+
+.nsfwCheckbox {
+  width: 18px;
+  height: 18px;
+  accent-color: #ef4444;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.nsfwLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--lumihub-text);
+  white-space: nowrap;
+}
+
+.nsfwHint {
+  font-size: 12px;
+  color: var(--lumihub-text-dim);
+}
+
 /* ── Feedback ── */
 .errorBox {
   display: flex;

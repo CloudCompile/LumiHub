@@ -14,8 +14,9 @@ import {
   FilterRadioOption,
   FilterSortList,
   FilterSortOption,
-  FilterPlaceholder,
-  FilterCheckbox
+  FilterTagInput,
+  FilterCheckbox,
+  FilterNumberInput
 } from '../../layouts/browse/FilterSidebar';
 import styles from './Characters.module.css';
 
@@ -46,14 +47,19 @@ function SkeletonGrid() {
 const Characters = () => {
   const {
     source, search, sort,
-    setSource, setSearch, setSort, setPage,
+    tags, excludeTags,
+    minTokens, showNsfw, showNsfl, requireImages,
+    setSource, setSearch, setSort,
+    addTag, removeTag, addExcludeTag, removeExcludeTag,
+    setMinTokens, setShowNsfw, setShowNsfl, setRequireImages,
   } = useCharacterStore();
 
-  const { characters, pagination, loading, error } = useCharacters();
+  const { characters, pagination, loading, loadingMore, hasNextPage, fetchNextPage, error } = useCharacters();
   const navigate = useNavigate();
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [localSearch, setLocalSearch] = useState(search);
+  const [localMinTokens, setLocalMinTokens] = useState(minTokens);
   const [mobileFilters, setMobileFilters] = useState(false);
 
   // Debounce search
@@ -65,6 +71,16 @@ const Characters = () => {
     }, 400);
     return () => clearTimeout(timer);
   }, [localSearch, search, setSearch]);
+
+  // Debounce min tokens (2s)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (localMinTokens !== minTokens) {
+        setMinTokens(localMinTokens);
+      }
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [localMinTokens, minTokens, setMinTokens]);
 
   const handleSearchSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
@@ -78,15 +94,15 @@ const Characters = () => {
       <BrowsePage
         title="Characters"
         searchPlaceholder="Search characters..."
-        headerActions={
-          <button 
+        headerActions={source === 'lumihub' ? (
+          <button
             className={styles.createBtn}
             onClick={() => setIsCreateOpen(true)}
           >
             <Plus size={16} />
             Create
           </button>
-        }
+        ) : undefined}
         emptyStateTitle={source === 'lumihub' ? 'No characters yet' : 'No characters found'}
         emptyStateDesc={source === 'lumihub' ? 'Be the first to upload a character!' : 'Try adjusting your search or filters.'}
         search={localSearch}
@@ -103,7 +119,9 @@ const Characters = () => {
           page: pagination.page,
           total: pagination.total,
           totalPages: pagination.totalPages,
-          onPageChange: setPage,
+          hasNextPage,
+          fetchNextPage,
+          loadingMore,
         }}
         mobileFiltersOpen={mobileFilters}
         onToggleMobileFilters={() => setMobileFilters(!mobileFilters)}
@@ -145,13 +163,60 @@ const Characters = () => {
               </FilterSortList>
             </FilterSection>
 
-            <FilterSection label="Tags">
-              <FilterPlaceholder text="Tag filtering coming soon" />
+            <FilterSection label="Include Tags">
+              <FilterTagInput
+                tags={tags}
+                onAdd={addTag}
+                onRemove={removeTag}
+                placeholder="Add tag…"
+                variant="include"
+              />
             </FilterSection>
 
-            <FilterSection label="Content">
-              <FilterCheckbox label="Show NSFW" disabled={true} />
-            </FilterSection>
+            {source === 'chub' && (
+              <FilterSection label="Exclude Tags">
+                <FilterTagInput
+                  tags={excludeTags}
+                  onAdd={addExcludeTag}
+                  onRemove={removeExcludeTag}
+                  placeholder="Exclude tag…"
+                  variant="exclude"
+                />
+              </FilterSection>
+            )}
+
+            {source === 'chub' && (
+              <>
+                <FilterSection label="Quality">
+                  <FilterNumberInput
+                    value={localMinTokens}
+                    onChange={setLocalMinTokens}
+                    min={0}
+                    step={50}
+                    suffix="min tokens"
+                    placeholder="750"
+                  />
+                  <FilterCheckbox
+                    label="Require avatar image"
+                    checked={requireImages}
+                    onChange={setRequireImages}
+                  />
+                </FilterSection>
+
+                <FilterSection label="Content">
+                  <FilterCheckbox
+                    label="Show NSFW"
+                    checked={showNsfw}
+                    onChange={setShowNsfw}
+                  />
+                  <FilterCheckbox
+                    label="Show NSFL"
+                    checked={showNsfl}
+                    onChange={setShowNsfl}
+                  />
+                </FilterSection>
+              </>
+            )}
           </FilterSidebar>
         }
       >

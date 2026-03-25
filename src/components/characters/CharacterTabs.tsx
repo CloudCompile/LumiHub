@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, MessageSquare, Users, BookOpen, User, Smile, Images } from 'lucide-react';
+import { FileText, MessageSquare, Users, BookOpen, User, Smile, Images, Loader2 } from 'lucide-react';
 import { useCharacterImages } from '../../hooks/useCharacterImages';
+import { useChubCharacterDetail } from '../../hooks/useChubCharacterDetail';
+import LazyImage from '../shared/LazyImage';
 import type { UnifiedCharacterCard } from '../../types/character';
 import type { ChubCharacterCard } from '../../types/chub';
 import type { LumiHubCharacter } from '../../types/character';
@@ -35,6 +37,15 @@ function TextBlock({ label, content }: { label: string; content?: string | null 
   );
 }
 
+function LoadingBlock() {
+  return (
+    <div className={styles.loadingBlock}>
+      <Loader2 size={18} className={styles.spinner} />
+      <span>Loading from Chub...</span>
+    </div>
+  );
+}
+
 interface CharacterTabsProps {
   card: UnifiedCharacterCard;
   tabBarClassName?: string;
@@ -45,12 +56,41 @@ const CharacterTabs: React.FC<CharacterTabsProps> = ({ card, tabBarClassName, ta
   const [activeTab, setActiveTab] = useState<TabId>('overview');
 
   const isChub = card.source === 'chub';
-  const chubData = isChub ? (card.raw as ChubCharacterCard) : null;
+  const chubCard = isChub ? (card.raw as ChubCharacterCard) : null;
   const lumiData = !isChub ? (card.raw as LumiHubCharacter) : null;
 
-  const description = lumiData?.description || chubData?.description || chubData?.tagline || '';
+  // Lazy-load full Chub definition when viewing a Chub character
+  const { data: chubDef, isLoading: chubDefLoading } = useChubCharacterDetail(
+    isChub ? card.id : undefined,
+  );
+
+  const description = lumiData?.description || chubDef?.description || chubCard?.description || chubCard?.tagline || '';
+  const personality = lumiData?.personality || chubDef?.personality || '';
+  const scenario = lumiData?.scenario || chubDef?.scenario || '';
+  const systemPrompt = lumiData?.system_prompt || chubDef?.system_prompt || '';
+  const postHistory = lumiData?.post_history_instructions || chubDef?.post_history_instructions || '';
+  const mesExample = lumiData?.mes_example || chubDef?.example_dialogs || '';
+  const firstMessage = lumiData?.first_mes || chubDef?.first_message || '';
+  const alternateGreetings = lumiData?.alternate_greetings || chubDef?.alternate_greetings || [];
+
+  // Lorebook: LumiHub uses character_book, Chub uses embedded_lorebook
   const characterBook = lumiData?.character_book as { entries?: WorldBookEntry[] } | null | undefined;
-  const lorebookEntries: WorldBookEntry[] = characterBook?.entries ?? [];
+  const lumiEntries: WorldBookEntry[] = characterBook?.entries ?? [];
+  const chubEntries = chubDef?.embedded_lorebook?.entries ?? [];
+  const lorebookEntries = lumiEntries.length > 0 ? lumiEntries : chubEntries.map((e) => ({
+    keys: e.keys,
+    secondary_keys: e.secondary_keys,
+    content: e.content,
+    name: e.name,
+    comment: e.comment,
+    enabled: e.enabled,
+    priority: e.priority,
+    insertion_order: e.insertion_order,
+    case_sensitive: e.case_sensitive,
+    selective: e.selective,
+    constant: e.constant,
+    position: e.position as 'before_char' | 'after_char',
+  }));
 
   // Fetch character images for LumiHub characters
   const { data: images } = useCharacterImages(lumiData?.id);
@@ -82,6 +122,8 @@ const CharacterTabs: React.FC<CharacterTabsProps> = ({ card, tabBarClassName, ta
 
   tabs.push({ id: 'creator', label: 'Creator', icon: User });
 
+  const greetingCount = (firstMessage ? 1 : 0) + alternateGreetings.length;
+
   return (
     <>
       <div className={`${styles.tabBar} ${tabBarClassName || ''}`}>
@@ -96,8 +138,8 @@ const CharacterTabs: React.FC<CharacterTabsProps> = ({ card, tabBarClassName, ta
             {tab.id === 'lorebook' && lorebookEntries.length > 0 && (
               <span className={styles.tabBadge}>{lorebookEntries.length}</span>
             )}
-            {tab.id === 'greetings' && lumiData?.alternate_greetings && lumiData.alternate_greetings.length > 0 && (
-              <span className={styles.tabBadge}>{lumiData.alternate_greetings.length + 1}</span>
+            {tab.id === 'greetings' && greetingCount > 0 && (
+              <span className={styles.tabBadge}>{greetingCount}</span>
             )}
             {tab.id === 'expressions' && expressionImages.length > 0 && (
               <span className={styles.tabBadge}>{expressionImages.length}</span>
@@ -112,7 +154,9 @@ const CharacterTabs: React.FC<CharacterTabsProps> = ({ card, tabBarClassName, ta
       <div className={`${styles.tabContent} ${tabContentClassName || ''}`}>
         {activeTab === 'overview' && (
           <div>
-            {description ? (
+            {isChub && chubDefLoading ? (
+              <LoadingBlock />
+            ) : description ? (
               <pre className={styles.descriptionText}>{description}</pre>
             ) : (
               <p className={styles.emptyText}>No description provided.</p>
@@ -122,20 +166,20 @@ const CharacterTabs: React.FC<CharacterTabsProps> = ({ card, tabBarClassName, ta
 
         {activeTab === 'prompts' && (
           <div className={styles.promptsGrid}>
-            {isChub ? (
-              <p className={styles.emptyText}>Install this character to view full prompt data.</p>
+            {isChub && chubDefLoading ? (
+              <LoadingBlock />
             ) : (
               <>
-                <TextBlock label="Personality" content={lumiData?.personality} />
-                <TextBlock label="Scenario" content={lumiData?.scenario} />
-                <TextBlock label="System Prompt" content={lumiData?.system_prompt} />
-                <TextBlock label="Post-History Instructions" content={lumiData?.post_history_instructions} />
-                <TextBlock label="Message Examples" content={lumiData?.mes_example} />
-                {!lumiData?.personality && !lumiData?.scenario && !lumiData?.system_prompt && !lumiData?.post_history_instructions && !lumiData?.mes_example && (
+                <TextBlock label="Personality" content={personality} />
+                <TextBlock label="Scenario" content={scenario} />
+                <TextBlock label="System Prompt" content={systemPrompt} />
+                <TextBlock label="Post-History Instructions" content={postHistory} />
+                <TextBlock label="Message Examples" content={mesExample} />
+                {!personality && !scenario && !systemPrompt && !postHistory && !mesExample && (
                   <p className={styles.emptyText}>No prompt data defined for this character.</p>
                 )}
 
-                {/* Alternate fields */}
+                {/* Alternate fields (LumiHub only) */}
                 {hasAltFields && (
                   <div className={styles.altFieldsSection}>
                     <h4 className={styles.altFieldsHeader}>Alternate Fields</h4>
@@ -161,20 +205,20 @@ const CharacterTabs: React.FC<CharacterTabsProps> = ({ card, tabBarClassName, ta
 
         {activeTab === 'greetings' && (
           <div className={styles.greetingsList}>
-            {isChub ? (
-              <p className={styles.emptyText}>Install this character to view greetings.</p>
+            {isChub && chubDefLoading ? (
+              <LoadingBlock />
             ) : (
               <>
-                {lumiData?.first_mes && (
+                {firstMessage && (
                   <div className={styles.greetingCard}>
                     <div className={styles.greetingHeader}>
                       <span className={styles.greetingLabel}>First Message</span>
                       <span className={styles.greetingBadge}>Default</span>
                     </div>
-                    <pre className={styles.greetingContent}>{lumiData.first_mes}</pre>
+                    <pre className={styles.greetingContent}>{firstMessage}</pre>
                   </div>
                 )}
-                {lumiData?.alternate_greetings?.map((greeting, i) => (
+                {alternateGreetings.map((greeting, i) => (
                   <div key={i} className={styles.greetingCard}>
                     <div className={styles.greetingHeader}>
                       <span className={styles.greetingLabel}>Alternate Greeting {i + 1}</span>
@@ -182,7 +226,7 @@ const CharacterTabs: React.FC<CharacterTabsProps> = ({ card, tabBarClassName, ta
                     <pre className={styles.greetingContent}>{greeting}</pre>
                   </div>
                 ))}
-                {!lumiData?.first_mes && (!lumiData?.alternate_greetings || lumiData.alternate_greetings.length === 0) && (
+                {!firstMessage && alternateGreetings.length === 0 && (
                   <p className={styles.emptyText}>No greetings defined for this character.</p>
                 )}
               </>
@@ -192,7 +236,9 @@ const CharacterTabs: React.FC<CharacterTabsProps> = ({ card, tabBarClassName, ta
 
         {activeTab === 'lorebook' && (
           <div className={styles.lorebookList}>
-            {lorebookEntries.length > 0 ? (
+            {isChub && chubDefLoading ? (
+              <LoadingBlock />
+            ) : lorebookEntries.length > 0 ? (
               lorebookEntries.map((entry, i) => (
                 <div key={i} className={styles.loreEntry}>
                   <div className={styles.loreEntryHeader}>
@@ -213,9 +259,7 @@ const CharacterTabs: React.FC<CharacterTabsProps> = ({ card, tabBarClassName, ta
                 </div>
               ))
             ) : (
-              <p className={styles.emptyText}>
-                {isChub ? 'Install this character to view embedded lorebook data.' : 'No embedded lorebook for this character.'}
-              </p>
+              <p className={styles.emptyText}>No embedded lorebook for this character.</p>
             )}
           </div>
         )}
@@ -226,11 +270,12 @@ const CharacterTabs: React.FC<CharacterTabsProps> = ({ card, tabBarClassName, ta
               <div className={styles.expressionsTabGrid}>
                 {expressionImages.map((img) => (
                   <div key={img.id} className={styles.expressionTabItem}>
-                    <img
-                      src={normalizeImagePath(img.file_path) ?? ''}
+                    <LazyImage
+                      src={normalizeImagePath(img.file_path)}
                       alt={img.label || 'Expression'}
                       className={styles.expressionTabImg}
-                      loading="lazy"
+                      containerClassName={styles.expressionTabImgWrap}
+                      spinnerSize={16}
                     />
                     <span className={styles.expressionTabLabel}>{img.label || 'Unnamed'}</span>
                   </div>
@@ -247,12 +292,13 @@ const CharacterTabs: React.FC<CharacterTabsProps> = ({ card, tabBarClassName, ta
             {galleryImages.length > 0 ? (
               <div className={styles.galleryTabGrid}>
                 {galleryImages.map((img) => (
-                  <img
+                  <LazyImage
                     key={img.id}
-                    src={normalizeImagePath(img.file_path) ?? ''}
+                    src={normalizeImagePath(img.file_path)}
                     alt="Gallery"
                     className={styles.galleryTabImg}
-                    loading="lazy"
+                    containerClassName={styles.galleryTabImgWrap}
+                    spinnerSize={18}
                   />
                 ))}
               </div>
@@ -267,7 +313,7 @@ const CharacterTabs: React.FC<CharacterTabsProps> = ({ card, tabBarClassName, ta
             <div className={styles.creatorHeader}>
               <div className={styles.creatorAvatar}>
                 {lumiData?.owner?.avatar ? (
-                  <img src={lumiData.owner.avatar} alt={card.creator} />
+                  <LazyImage src={lumiData.owner.avatar} alt={card.creator} />
                 ) : (
                   <User size={32} />
                 )}
@@ -275,7 +321,7 @@ const CharacterTabs: React.FC<CharacterTabsProps> = ({ card, tabBarClassName, ta
               <div className={styles.creatorMain}>
                 <h3 className={styles.creatorName}>{card.creator}</h3>
                 <p className={styles.creatorSubtitle}>
-                  {lumiData?.owner ? 'Verified Creator' : 'Guest Contributor'}
+                  {lumiData?.owner ? 'Verified Creator' : isChub ? 'Chub Creator' : 'Guest Contributor'}
                 </p>
               </div>
               {card.creatorDiscordId && (
@@ -286,7 +332,7 @@ const CharacterTabs: React.FC<CharacterTabsProps> = ({ card, tabBarClassName, ta
             </div>
 
             <div className={styles.creatorMeta}>
-              <TextBlock label="Creator Notes" content={lumiData?.creator_notes || (isChub ? 'Not available from Chub API.' : 'No notes provided.')} />
+              <TextBlock label="Creator Notes" content={lumiData?.creator_notes || undefined} />
               {lumiData?.character_version && (
                 <div className={styles.metaRow}>
                   <span className={styles.metaLabel}>Version</span>

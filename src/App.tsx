@@ -3,7 +3,11 @@ import Layout from './components/layout/Layout';
 import Home from './pages/home/Home';
 import Characters from './pages/characters/Characters';
 import CharacterDetail from './pages/characters/CharacterDetail';
+import Worldbooks from './pages/worldbooks/Worldbooks';
+import WorldbookDetail from './pages/worldbooks/WorldbookDetail';
 import UserProfile from './pages/user/UserProfile';
+import Themes from './pages/themes/Themes';
+import Presets from './pages/presets/Presets';
 
 function App() {
   return (
@@ -13,9 +17,10 @@ function App() {
           <Route index element={<Home />} />
           <Route path="characters" element={<Characters />} />
           <Route path="characters/:id" element={<CharacterDetail />} />
-          <Route path="worldbooks" element={<div>Worldbooks Page (Coming Soon)</div>} />
-          <Route path="themes" element={<div>Themes Page (Coming Soon)</div>} />
-          <Route path="presets" element={<div>Presets Page (Coming Soon)</div>} />
+          <Route path="worldbooks" element={<Worldbooks />} />
+          <Route path="worldbooks/:id" element={<WorldbookDetail />} />
+          <Route path="themes" element={<Themes />} />
+          <Route path="presets" element={<Presets />} />
           <Route path="user/:discordId" element={<UserProfile />} />
         </Route>
       </Routes>

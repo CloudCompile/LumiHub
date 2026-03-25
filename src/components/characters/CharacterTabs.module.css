@@ -3,6 +3,12 @@
   gap: 0;
   border-bottom: 1px solid var(--lumihub-border);
   overflow-x: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.tabBar::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
 }
 
 .tab {
@@ -91,6 +97,24 @@
   color: var(--lumihub-text-dim);
   font-style: italic;
   margin: 0;
+}
+
+.loadingBlock {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 0;
+  font-size: 13px;
+  color: var(--lumihub-text-muted);
+}
+
+.spinner {
+  animation: tab-spin 0.8s linear infinite;
+  color: var(--lumihub-primary);
+}
+
+@keyframes tab-spin {
+  to { transform: rotate(360deg); }
 }
 
 .promptsGrid {
@@ -253,18 +277,21 @@
   gap: 6px;
 }
 
-.expressionTabImg {
+.expressionTabImgWrap {
   width: 100%;
   aspect-ratio: 1;
-  object-fit: cover;
   border-radius: 10px;
   border: 1px solid var(--lumihub-glass-border);
   background: rgba(0, 0, 0, 0.15);
   transition: border-color 0.15s ease;
 }
 
-.expressionTabImg:hover {
+.expressionTabImgWrap:hover {
   border-color: var(--lumihub-primary-020);
+}
+
+.expressionTabImg {
+  border-radius: 10px;
 }
 
 .expressionTabLabel {
@@ -285,10 +312,9 @@
   gap: 10px;
 }
 
-.galleryTabImg {
+.galleryTabImgWrap {
   width: 100%;
   aspect-ratio: 1;
-  object-fit: cover;
   border-radius: 8px;
   border: 1px solid var(--lumihub-glass-border);
   background: rgba(0, 0, 0, 0.15);
@@ -296,9 +322,13 @@
   transition: border-color 0.15s ease, transform 0.15s ease;
 }
 
-.galleryTabImg:hover {
+.galleryTabImgWrap:hover {
   border-color: var(--lumihub-primary-020);
   transform: scale(1.02);
+}
+
+.galleryTabImg {
+  border-radius: 8px;
 }
 
 /* ── Alt Fields ── */

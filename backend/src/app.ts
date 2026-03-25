@@ -4,11 +4,13 @@ import { serveStatic } from 'hono/bun';
 import { upgradeWebSocket, websocket } from 'hono/bun';
 import { errorHandler, notFound } from './middleware/error.middleware.ts';
 import charactersRoutes from './routes/characters.routes.ts';
+import worldbooksRoutes from './routes/worldbooks.routes.ts';
 import authRoutes from './routes/auth.routes.ts';
 import userRoutes from './routes/user.routes.ts';
 import linkRoutes from './routes/link.routes.ts';
 import { logger } from './utils/logger.ts';
 import { env } from './env.ts';
+import { opengraphMiddleware } from './middleware/opengraph.middleware.ts';
 import { validateLinkToken, updateLastSeen } from './services/link.service.ts';
 import { instanceManager } from './ws/instance-connections.ts';
 
@@ -37,6 +39,7 @@ if (env.NODE_ENV === 'production') {
 
 app.use('*', errorHandler);
 app.route('/api/v1/characters', charactersRoutes);
+app.route('/api/v1/worldbooks', worldbooksRoutes);
 app.route('/api/v1/auth', authRoutes);
 app.route('/api/v1/user', userRoutes);
 app.route('/api/v1/link', linkRoutes);
@@ -97,6 +100,14 @@ app.get('/api/v1/ws/instance', upgradeWebSocket((c) => {
     },
   };
 }));
+
+// OpenGraph meta injection for content routes (must be before SPA fallback)
+if (env.NODE_ENV === 'production') {
+  app.get('/characters/:id', opengraphMiddleware);
+  app.get('/worldbooks/:id', opengraphMiddleware);
+  app.get('/presets/:id', opengraphMiddleware);
+  app.get('/themes/:id', opengraphMiddleware);
+}
 
 // SPA fallback — serve index.html for non-API routes in production
 if (env.NODE_ENV === 'production') {

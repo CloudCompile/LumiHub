@@ -1,5 +1,5 @@
-import React from 'react';
-import { Search, X, SlidersHorizontal, ChevronDown, Sparkles } from 'lucide-react';
+import React, { useRef, useEffect } from 'react';
+import { Search, X, SlidersHorizontal, Sparkles, Loader2 } from 'lucide-react';
 import clsx from 'clsx';
 import styles from './BrowsePage.module.css';
 
@@ -7,7 +7,10 @@ interface PaginationProps {
   page: number;
   totalPages: number;
   total: number;
-  onPageChange: (page: number) => void;
+  onPageChange?: (page: number) => void;
+  hasNextPage?: boolean;
+  fetchNextPage?: () => void;
+  loadingMore?: boolean;
 }
 
 interface BrowsePageProps {
@@ -51,6 +54,25 @@ const BrowsePage: React.FC<BrowsePageProps> = ({
   onToggleMobileFilters,
   SkeletonGrid,
 }) => {
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    if (!pagination.hasNextPage || pagination.loadingMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          pagination.fetchNextPage?.();
+        }
+      },
+      { rootMargin: '400px' },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [pagination.hasNextPage, pagination.loadingMore, pagination.fetchNextPage]);
+
   return (
     <div className={styles.page}>
       {/* Mobile Backdrop */}
@@ -114,7 +136,9 @@ const BrowsePage: React.FC<BrowsePageProps> = ({
         {/* Result info */}
         {!loading && itemsCount > 0 && (
           <div className={styles.resultInfo}>
-            Showing {itemsCount} of {pagination.total} results
+            {pagination.total > 0
+              ? `Showing ${itemsCount} of ${pagination.total} results`
+              : `Showing ${itemsCount} results`}
           </div>
         )}
 
@@ -133,16 +157,12 @@ const BrowsePage: React.FC<BrowsePageProps> = ({
           )}
         </div>
 
-        {/* Load More */}
-        {!loading && pagination.totalPages > 1 && pagination.page < pagination.totalPages && (
-          <div className={styles.loadMoreWrap}>
-            <button
-              className={styles.loadMoreBtn}
-              onClick={() => pagination.onPageChange(pagination.page + 1)}
-            >
-              Load More
-              <ChevronDown size={16} />
-            </button>
+        {/* Infinite scroll sentinel */}
+        {!loading && pagination.hasNextPage && (
+          <div ref={sentinelRef} className={styles.sentinelWrap}>
+            {pagination.loadingMore && (
+              <Loader2 size={24} className={styles.spinner} />
+            )}
           </div>
         )}
       </div>

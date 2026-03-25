@@ -5,6 +5,7 @@ import { verify } from 'hono/jwt';
 import { env } from '../env.ts';
 import * as LinkService from '../services/link.service.ts';
 import * as CharacterService from '../services/characters.service.ts';
+import * as WorldbookService from '../services/worldbooks.service.ts';
 import { instanceManager } from '../ws/instance-connections.ts';
 
 const link = new Hono<AuthEnv>();
@@ -243,9 +244,82 @@ link.post('/install', requireAuth, async (c) => {
     try {
         const result = await instanceManager.sendRequest(instance_id, 'install_character', payload);
         const resultPayload = result.payload as Record<string, unknown>;
+        const success = resultPayload?.success ?? false;
+
+        // Increment download counter on successful install
+        if (success && source !== 'chub') {
+            await CharacterService.incrementDownloads(character_id).catch(() => {});
+        }
+
         return c.json({
-            success: resultPayload?.success ?? false,
+            success,
             characterId: resultPayload?.characterId,
+            error: resultPayload?.error,
+        });
+    } catch (err: any) {
+        return c.json({ error: err.message || 'Install request failed' }, 504);
+    }
+});
+
+/**
+ * Trigger a remote worldbook install to a linked Lumiverse instance.
+ */
+link.post('/install-worldbook', requireAuth, async (c) => {
+    const userId = c.get('userId');
+    const body = await c.req.json();
+    const { instance_id, worldbook_id, source } = body;
+
+    if (!instance_id || !worldbook_id) {
+        return c.json({ error: 'instance_id and worldbook_id are required' }, 400);
+    }
+
+    const instances = await LinkService.listInstances(userId);
+    const instance = instances.find((i) => i.id === instance_id);
+    if (!instance) return c.json({ error: 'Instance not found' }, 404);
+    if (!instance.is_online) return c.json({ error: 'Instance is offline' }, 503);
+
+    let payload: Record<string, unknown>;
+
+    if (source === 'chub') {
+        // Chub lorebook — send the Chub API URL for Lumiverse to fetch
+        const apiPath = worldbook_id.replace(/^lorebooks\//, '');
+        payload = {
+            source: 'chub',
+            worldbookId: worldbook_id,
+            worldbookName: worldbook_id,
+            importUrl: `https://api.chub.ai/api/lorebooks/${apiPath}?full=true`,
+        };
+    } else {
+        // LumiHub worldbook — send inline entries
+        const wb = await WorldbookService.getWorldbookById(worldbook_id);
+        if (!wb) return c.json({ error: 'Worldbook not found' }, 404);
+
+        const entries = WorldbookService.normalizeLorebookEntries(wb.entries);
+        payload = {
+            source: 'lumihub',
+            worldbookId: worldbook_id,
+            worldbookName: wb.name,
+            worldbookData: {
+                name: wb.name,
+                description: wb.description,
+                entries,
+            },
+        };
+    }
+
+    try {
+        const result = await instanceManager.sendRequest(instance_id, 'install_worldbook', payload);
+        const resultPayload = result.payload as Record<string, unknown>;
+        const success = resultPayload?.success ?? false;
+
+        // Increment download counter on successful install
+        if (success && source !== 'chub') {
+            await WorldbookService.incrementDownloads(worldbook_id).catch(() => {});
+        }
+
+        return c.json({
+            success,
+            worldbookId: resultPayload?.worldbookId,
             error: resultPayload?.error,
         });
     } catch (err: any) {

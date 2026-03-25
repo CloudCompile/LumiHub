@@ -1,14 +1,16 @@
-import { useEffect } from 'react';
-import { useState } from 'react';
-import { X, Download, Star, Users, ArrowLeft, ExternalLink, Image, FileText, Package } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { X, Download, Star, Users, ArrowLeft, ExternalLink, Image, FileText, Package, Trash2 } from 'lucide-react';
 import { useCharacterImages } from '../../hooks/useCharacterImages';
+import { useAuth } from '../../hooks/useAuth';
+import { useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import type { UnifiedCharacterCard } from '../../types/character';
 import type { ChubCharacterCard } from '../../types/chub';
 import type { LumiHubCharacter } from '../../types/character';
-import { downloadCharacter } from '../../api/characters';
+import { downloadCharacter, deleteCharacter } from '../../api/characters';
 import CharacterTabs from './CharacterTabs';
 import InstallButton from './InstallButton';
+import LazyImage from '../shared/LazyImage';
 import styles from './CharacterModal.module.css';
 
 interface Props {
@@ -28,11 +30,15 @@ const CharacterModal: React.FC<Props> = ({ card, onClose }) => {
   const chubData = isChub ? (card.raw as ChubCharacterCard) : null;
   const lumiData = !isChub ? (card.raw as LumiHubCharacter) : null;
   const [heroUrl, setHeroUrl] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const { data: images } = useCharacterImages(lumiData?.id);
   const altAvatars = images?.filter((img) => img.image_type === 'avatar_alt') ?? [];
   const hasCharxAssets = (images?.length ?? 0) > 1;
 
+  const isOwner = !isChub && user && lumiData?.owner?.id === user.id;
   const displayAvatar = heroUrl || card.avatarUrl;
 
   useEffect(() => {
@@ -60,6 +66,19 @@ const CharacterModal: React.FC<Props> = ({ card, onClose }) => {
     }
   };
 
+  const handleDelete = async () => {
+    if (!lumiData || !confirm(`Delete "${card.name}"? This cannot be undone.`)) return;
+    setDeleting(true);
+    try {
+      await deleteCharacter(lumiData.id);
+      queryClient.invalidateQueries({ queryKey: ['characters'] });
+      onClose();
+    } catch (err) {
+      console.error('Delete failed:', err);
+      setDeleting(false);
+    }
+  };
+
   const formattedDownloads = card.downloads > 1000
     ? `${(card.downloads / 1000).toFixed(1)}k`
     : String(card.downloads);
@@ -81,7 +100,12 @@ const CharacterModal: React.FC<Props> = ({ card, onClose }) => {
           <div className={styles.hero}>
             <div className={styles.heroImage}>
               {displayAvatar ? (
-                <img src={displayAvatar} alt={card.name} className={styles.heroImg} />
+                <LazyImage
+                  src={displayAvatar}
+                  alt={card.name}
+                  className={styles.heroImg}
+                  fallback={<div className={styles.heroPlaceholder}>{card.name.charAt(0)}</div>}
+                />
               ) : (
                 <div className={styles.heroPlaceholder}>{card.name.charAt(0)}</div>
               )}
@@ -160,6 +184,12 @@ const CharacterModal: React.FC<Props> = ({ card, onClose }) => {
                         <Package size={14} />
                         .charx
                       </a>
+                    )}
+                    {isOwner && (
+                      <button className={styles.dangerBtn} onClick={handleDelete} disabled={deleting}>
+                        <Trash2 size={14} />
+                        {deleting ? 'Deleting...' : 'Delete'}
+                      </button>
                     )}
                   </>
                 )}

@@ -4,6 +4,7 @@ import { Users, Book, Palette, Sparkles, ArrowRight, Plug, Zap, Shield, Trending
 import { listCharacters } from '../../api/characters';
 import { fromLumiHub, type UnifiedCharacterCard } from '../../types/character';
 import CharacterCard from '../../components/characters/CharacterCard';
+import LazyImage from '../../components/shared/LazyImage';
 import styles from './Home.module.css';
 
 const Home = () => {
@@ -37,7 +38,7 @@ const Home = () => {
             </Link>
           </div>
         </section>
-        <img src="/lumihub-mascot.png" alt="LumiHub Mascot" className={styles.heroMascot} />
+        <LazyImage src="/lumihub-mascot.png" alt="LumiHub Mascot" className={styles.heroMascot} containerClassName={styles.heroMascotWrap} style={{ height: 'auto', objectFit: 'contain' }} />
       </div>
 
       {/* Trending Characters */}
@@ -86,11 +87,10 @@ const Home = () => {
             <Palette size={16} />
             Themes
           </Link>
-          <span className={`${styles.chip} ${styles.chipDisabled}`}>
+          <Link to="/presets" className={styles.chip}>
             <Sparkles size={16} />
             Presets
-            <span className={styles.chipSoon}>Soon</span>
-          </span>
+          </Link>
         </div>
       </section>
 
