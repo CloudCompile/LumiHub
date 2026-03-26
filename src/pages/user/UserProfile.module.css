@@ -1,6 +1,25 @@
 .pageWrapper {
   width: 100%;
   min-height: calc(100vh - var(--lumihub-nav-height));
+  position: relative;
+  overflow-x: hidden;
+}
+
+.profileContainer {
+  width: 100%;
+  transition: padding-left 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.editorOpen .profileContainer {
+  padding-left: 450px;
+}
+
+@media (max-width: 1200px) {
+  .editorOpen .profileContainer {
+    padding-left: 0;
+    opacity: 0.3;
+    pointer-events: none;
+  }
 }
 
 .banner {
@@ -265,6 +284,30 @@
 
 .notFoundState p {
   font-size: 14px;
+}
+
+.ownerActions {
+  display: flex;
+  margin-top: 1rem;
+}
+
+.editThemeBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--surface-2);
+  color: var(--text-1);
+  border: 1px solid var(--border);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.editThemeBtn:hover {
+  background-color: var(--surface-3);
+  border-color: var(--primary);
 }
 
 @media (max-width: 768px) {

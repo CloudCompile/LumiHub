@@ -1,5 +1,7 @@
 export const FILE_SIZE_LIMITS = {
   IMAGE: 5 * 1024 * 1024,
+  PROFILE_ASSET_IMAGE: 5 * 1024 * 1024,
+  PROFILE_ASSET_VIDEO: 15 * 1024 * 1024,
   CHARACTER_CARD: 10 * 1024 * 1024,
   CHARX: 50 * 1024 * 1024,
   WORLDBOOK: 5 * 1024 * 1024,
@@ -10,6 +12,7 @@ export const FILE_SIZE_LIMITS = {
 
 export const ALLOWED_MIME_TYPES = {
   IMAGE: ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/avif'],
+  VIDEO: ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-matroska'],
   JSON: ['application/json'],
   CSS: ['text/css'],
 } as const;
@@ -21,6 +24,7 @@ export const UPLOAD_PATHS = {
   WORLDBOOKS: 'uploads/worldbooks',
   THEMES: 'uploads/themes',
   PRESETS: 'uploads/presets',
+  PROFILE_ASSETS: 'uploads/profile_assets',
 } as const;
 
 export const NSFW_CLASSES = {

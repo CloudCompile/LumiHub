@@ -35,6 +35,36 @@ users.use('/*', jwt({
     alg: 'HS256'
 }));
 
+/** Update custom CSS */
+users.put('/@me/profile-css', async (c) => {
+    const payload = c.get('jwtPayload') as { id: string };
+    const userRepository = AppDataSource.getRepository(User);
+    const user = await userRepository.findOneBy({ id: payload.id });
+
+    if (!user) {
+        return c.json({ error: "User not found" }, 404);
+    }
+
+    const body = await c.req.json();
+    let css = body.css || '';
+
+    // Basic sanitization
+    css = css.replace(/expression\s*\(/gi, '');
+    css = css.replace(/url\s*\(\s*['"]?javascript:/gi, 'url(');
+    css = css.replace(/behavior\s*:/gi, 'blocked:');
+    css = css.replace(/-moz-binding\s*:/gi, 'blocked:');
+
+    // Limit size
+    if (css.length > 50000) {
+        return c.json({ error: "CSS too large" }, 400);
+    }
+
+    user.custom_css = css;
+    await userRepository.save(user);
+
+    return c.json({ message: 'Profile CSS updated', css: user.custom_css });
+});
+
 /** Get current user preferences */
 users.get('/@me/settings', async (c) => {
     const payload = c.get('jwtPayload') as { id: string };

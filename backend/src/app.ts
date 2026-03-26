@@ -9,6 +9,7 @@ import authRoutes from './routes/auth.routes.ts';
 import userRoutes from './routes/user.routes.ts';
 import linkRoutes from './routes/link.routes.ts';
 import moderationRoutes from './routes/moderation.routes.ts';
+import profileAssetsRoutes from './routes/profile-assets.routes.ts';
 import { logger } from './utils/logger.ts';
 import { env } from './env.ts';
 import { opengraphMiddleware, staticPageOgMiddleware } from './middleware/opengraph.middleware.ts';
@@ -31,7 +32,7 @@ app.use('*', async (c, next) => {
   logger.info(`${c.req.method} ${c.req.path} - ${c.res.status} (${duration}ms)`);
 });
 
-app.use('/uploads/*', serveStatic({ root: './uploads', rewriteRequestPath: (p) => p.replace(/^\/uploads/, '') }));
+app.use('/uploads/*', serveStatic({ root: './' }));
 
 // Serve built frontend in production
 if (env.NODE_ENV === 'production') {
@@ -45,6 +46,7 @@ app.route('/api/v1/auth', authRoutes);
 app.route('/api/v1/user', userRoutes);
 app.route('/api/v1/link', linkRoutes);
 app.route('/api/v1/moderation', moderationRoutes);
+app.route('/api/v1/profile-assets', profileAssetsRoutes);
 
 // WebSocket endpoint for Lumiverse instance connections
 app.get('/api/v1/ws/instance', upgradeWebSocket((c) => {

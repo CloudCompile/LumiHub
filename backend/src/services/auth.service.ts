@@ -11,7 +11,7 @@ type DiscordTokenResponse = {
 }
 
 export function getDiscordAuthUrl(state: string) {
-    let redirectUrlParams = new URLSearchParams({
+    const redirectUrlParams = new URLSearchParams({
         client_id: env.DISCORD_CLIENT_ID,
         redirect_uri: env.DISCORD_REDIRECT_URL,
         response_type: 'code',
@@ -23,7 +23,7 @@ export function getDiscordAuthUrl(state: string) {
 
 export async function exchangeCode(code: string) {
     try {
-        let formData = {
+        const formData = {
             client_id: env.DISCORD_CLIENT_ID,
             client_secret: env.DISCORD_SECRET_ID,
             code: code,

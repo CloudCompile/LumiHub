@@ -29,6 +29,7 @@ backend/node_modules
 backend/.env
 backend/bun.lock
 backend/uploads/characters/*
+backend/uploads/profile_assets/*
 docker-compose.yml
 .gitignore
 .env
