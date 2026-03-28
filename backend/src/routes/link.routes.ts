@@ -370,4 +370,37 @@ link.post('/install-worldbook', requireAuth, async (c) => {
     }
 });
 
+/**
+ * Get the install manifest for the user's linked instance.
+ * Returns the list of characters and world books installed on their Lumiverse instance.
+ * Optional ?type=character|worldbook filter.
+ */
+link.get('/manifest', requireAuth, async (c) => {
+    const userId = c.get('userId');
+    const type = c.req.query('type') as 'character' | 'worldbook' | undefined;
+    const ManifestService = await import('../services/manifest.service.ts');
+
+    const result = await ManifestService.getManifestForUser(userId, type || undefined);
+    if (!result) {
+        return c.json({ entries: [], instance_id: null });
+    }
+    return c.json({ entries: result.entries, instance_id: result.instanceId });
+});
+
+/**
+ * Quick check if a specific slug is installed on the user's linked instance.
+ */
+link.get('/manifest/check', requireAuth, async (c) => {
+    const userId = c.get('userId');
+    const slug = c.req.query('slug');
+    if (!slug) return c.json({ error: 'slug query parameter is required' }, 400);
+
+    const ManifestService = await import('../services/manifest.service.ts');
+    const result = await ManifestService.getManifestForUser(userId);
+    if (!result) return c.json({ installed: false });
+
+    const entry = await ManifestService.checkSlug(result.instanceId, slug);
+    return c.json({ installed: !!entry, entry });
+});
+
 export default link;

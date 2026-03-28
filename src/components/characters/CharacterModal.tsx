@@ -43,8 +43,10 @@ const CharacterModal: React.FC<Props> = ({ card, onClose }) => {
   const displayAvatar = heroUrl || card.avatarUrl;
 
   const lumiCharBook = lumiData?.character_book as { entries?: unknown[] } | null | undefined;
-  const hasEmbeddedLorebook = isChub || (lumiCharBook?.entries?.length ?? 0) > 0;
-  const lumiverseModules = lumiData?.extensions?.lumiverse_modules as { regex_scripts?: unknown[] } | undefined;
+  const lumiverseModules = lumiData?.extensions?.lumiverse_modules as { world_books?: Array<{ entries?: unknown[] }>; regex_scripts?: unknown[] } | undefined;
+  const hasEmbeddedLorebook = isChub
+    || (lumiCharBook?.entries?.length ?? 0) > 0
+    || (lumiverseModules?.world_books?.some((b) => (b.entries?.length ?? 0) > 0) ?? false);
   const regexScriptCount = lumiverseModules?.regex_scripts?.length ?? 0;
 
   useEffect(() => {
@@ -172,6 +174,7 @@ const CharacterModal: React.FC<Props> = ({ card, onClose }) => {
                     <InstallButton
                       characterId={card.id}
                       source="chub"
+                      card={card}
                       hasEmbeddedLorebook={hasEmbeddedLorebook}
                       className={styles.installBtn}
                     />
@@ -185,6 +188,7 @@ const CharacterModal: React.FC<Props> = ({ card, onClose }) => {
                     <InstallButton
                       characterId={card.id}
                       source="lumihub"
+                      card={card}
                       hasEmbeddedLorebook={hasEmbeddedLorebook}
                       className={styles.installBtn}
                     />

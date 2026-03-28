@@ -82,9 +82,12 @@ const CharacterDetail: React.FC = () => {
   const hasCharxAssets = (images?.length ?? 0) > 1;
   const isOwner = !isChub && user && lumiData?.owner?.id === user.id;
 
-  // Detect embedded lorebook for the install dropdown
+  // Detect embedded lorebook for the install dropdown (single character_book or multi world_books)
   const lumiCharBook = lumiData?.character_book as { entries?: unknown[] } | null | undefined;
-  const hasEmbeddedLorebook = isChub || (lumiCharBook?.entries?.length ?? 0) > 0;
+  const lumiWorldBooks = (lumiData?.extensions?.lumiverse_modules as any)?.world_books as Array<{ entries?: unknown[] }> | undefined;
+  const hasEmbeddedLorebook = isChub
+    || (lumiCharBook?.entries?.length ?? 0) > 0
+    || (lumiWorldBooks?.some((b) => (b.entries?.length ?? 0) > 0) ?? false);
 
   const displayAvatar = heroUrl || card.avatarUrl;
 
@@ -216,6 +219,7 @@ const CharacterDetail: React.FC = () => {
                 <InstallButton
                   characterId={card.id}
                   source="chub"
+                  card={card}
                   hasEmbeddedLorebook={hasEmbeddedLorebook}
                   className={styles.installBtn}
                 />
@@ -228,6 +232,7 @@ const CharacterDetail: React.FC = () => {
                 <InstallButton
                   characterId={card.id}
                   source="lumihub"
+                  card={card}
                   hasEmbeddedLorebook={hasEmbeddedLorebook}
                   className={styles.installBtn}
                 />

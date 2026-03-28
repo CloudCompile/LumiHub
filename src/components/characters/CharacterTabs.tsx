@@ -75,24 +75,58 @@ const CharacterTabs: React.FC<CharacterTabsProps> = ({ card, tabBarClassName, ta
   const firstMessage = lumiData?.first_mes || chubDef?.first_message || '';
   const alternateGreetings = lumiData?.alternate_greetings || chubDef?.alternate_greetings || [];
 
-  // Lorebook: LumiHub uses character_book, Chub uses embedded_lorebook
-  const characterBook = lumiData?.character_book as { entries?: WorldBookEntry[] } | null | undefined;
-  const lumiEntries: WorldBookEntry[] = characterBook?.entries ?? [];
+  // Lorebook: LumiHub supports multiple world books via lumiverse_modules.world_books,
+  // falls back to character_book (single merged book). Chub uses embedded_lorebook.
+  const characterBook = lumiData?.character_book as { name?: string; entries?: WorldBookEntry[] } | null | undefined;
   const chubEntries = chubDef?.embedded_lorebook?.entries ?? [];
-  const lorebookEntries = lumiEntries.length > 0 ? lumiEntries : chubEntries.map((e) => ({
-    keys: e.keys,
-    secondary_keys: e.secondary_keys,
-    content: e.content,
-    name: e.name,
-    comment: e.comment,
-    enabled: e.enabled,
-    priority: e.priority,
-    insertion_order: e.insertion_order,
-    case_sensitive: e.case_sensitive,
-    selective: e.selective,
-    constant: e.constant,
-    position: e.position as 'before_char' | 'after_char',
-  }));
+
+  // Lumiverse modules from extensions
+  const lumiverseModules = lumiData?.extensions?.lumiverse_modules as {
+    alternate_fields?: Record<string, Array<{ id: string; label: string; content: string }>>;
+    world_books?: Array<{ name: string; description?: string; entries?: WorldBookEntry[] }>;
+    regex_scripts?: BundledRegexScript[];
+  } | undefined;
+
+  // Build structured lorebook data: array of { name, entries }
+  type LorebookGroup = { name: string; entries: WorldBookEntry[] };
+  const lorebookGroups: LorebookGroup[] = (() => {
+    // Prefer individual world_books from lumiverse_modules (lossless multi-book)
+    const moduleBooks = lumiverseModules?.world_books;
+    if (moduleBooks && moduleBooks.length > 0) {
+      return moduleBooks
+        .filter((b) => b.entries && b.entries.length > 0)
+        .map((b) => ({ name: b.name || 'Unnamed Lorebook', entries: b.entries! }));
+    }
+    // Fall back to single character_book
+    if (characterBook?.entries && characterBook.entries.length > 0) {
+      return [{ name: characterBook.name || 'Lorebook', entries: characterBook.entries }];
+    }
+    // Fall back to Chub embedded lorebook
+    if (chubEntries.length > 0) {
+      return [{
+        name: 'Lorebook',
+        entries: chubEntries.map((e) => ({
+          keys: e.keys,
+          secondary_keys: e.secondary_keys,
+          content: e.content,
+          name: e.name,
+          comment: e.comment,
+          enabled: e.enabled,
+          priority: e.priority,
+          insertion_order: e.insertion_order,
+          case_sensitive: e.case_sensitive,
+          selective: e.selective,
+          constant: e.constant,
+          position: e.position as 'before_char' | 'after_char',
+        })),
+      }];
+    }
+    return [];
+  })();
+
+  const totalLorebookEntries = lorebookGroups.reduce((sum, g) => sum + g.entries.length, 0);
+  const hasMultipleBooks = lorebookGroups.length > 1;
+  const [activeBookIdx, setActiveBookIdx] = useState(0);
 
   // Fetch character images for LumiHub characters
   const { data: images } = useCharacterImages(lumiData?.id);
@@ -100,11 +134,6 @@ const CharacterTabs: React.FC<CharacterTabsProps> = ({ card, tabBarClassName, ta
   const expressionImages = images?.filter((img) => img.image_type === 'expression') ?? [];
   const galleryImages = images?.filter((img) => img.image_type === 'gallery') ?? [];
 
-  // Lumiverse modules from extensions
-  const lumiverseModules = lumiData?.extensions?.lumiverse_modules as {
-    alternate_fields?: Record<string, Array<{ id: string; label: string; content: string }>>;
-    regex_scripts?: BundledRegexScript[];
-  } | undefined;
   const alternateFields = lumiverseModules?.alternate_fields;
   const hasAltFields = alternateFields && Object.values(alternateFields).some((arr) => arr.length > 0);
   const regexScripts = lumiverseModules?.regex_scripts ?? [];
@@ -143,8 +172,8 @@ const CharacterTabs: React.FC<CharacterTabsProps> = ({ card, tabBarClassName, ta
           >
             <tab.icon size={14} aria-hidden="true" />
             <span>{tab.label}</span>
-            {tab.id === 'lorebook' && lorebookEntries.length > 0 && (
-              <span className={styles.tabBadge} aria-label={`${lorebookEntries.length} entries`}>{lorebookEntries.length}</span>
+            {tab.id === 'lorebook' && totalLorebookEntries > 0 && (
+              <span className={styles.tabBadge} aria-label={`${totalLorebookEntries} entries`}>{totalLorebookEntries}</span>
             )}
             {tab.id === 'greetings' && greetingCount > 0 && (
               <span className={styles.tabBadge} aria-label={`${greetingCount} greetings`}>{greetingCount}</span>
@@ -269,26 +298,54 @@ const CharacterTabs: React.FC<CharacterTabsProps> = ({ card, tabBarClassName, ta
           <div className={styles.lorebookList}>
             {isChub && chubDefLoading ? (
               <LoadingBlock />
-            ) : lorebookEntries.length > 0 ? (
-              lorebookEntries.map((entry, i) => (
-                <div key={i} className={styles.loreEntry}>
-                  <div className={styles.loreEntryHeader}>
-                    <span className={styles.loreEntryName}>{entry.name || entry.comment || `Entry ${i + 1}`}</span>
-                    <div className={styles.loreEntryMeta}>
-                      {!entry.enabled && <span className={styles.loreDisabled}>Disabled</span>}
-                      <span className={styles.lorePriority}>P{entry.priority ?? 0}</span>
-                    </div>
-                  </div>
-                  {entry.keys.length > 0 && (
-                    <div className={styles.loreKeys}>
-                      {entry.keys.map((key, ki) => (
-                        <span key={ki} className={styles.loreKey}>{key}</span>
+            ) : lorebookGroups.length > 0 ? (
+              <>
+                {/* Book selector — only shown when multiple books exist */}
+                {hasMultipleBooks && (
+                  <div className={styles.bookSelector}>
+                    <ScrollFadeRow className={styles.bookSelectorRow}>
+                      {lorebookGroups.map((group, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          className={`${styles.bookPill} ${activeBookIdx === idx ? styles.bookPillActive : ''}`}
+                          onClick={() => setActiveBookIdx(idx)}
+                        >
+                          <BookOpen size={12} aria-hidden="true" />
+                          <span className={styles.bookPillName}>{group.name}</span>
+                          <span className={styles.bookPillCount}>{group.entries.length}</span>
+                        </button>
                       ))}
-                    </div>
-                  )}
-                  <pre className={styles.loreContent}>{entry.content}</pre>
-                </div>
-              ))
+                    </ScrollFadeRow>
+                  </div>
+                )}
+
+                {/* Entry list for active book (or all entries when single book) */}
+                {(hasMultipleBooks ? [lorebookGroups[activeBookIdx]] : lorebookGroups).map((group, gi) => (
+                  <div key={gi}>
+                    {!hasMultipleBooks && lorebookGroups.length === 1 && null}
+                    {group.entries.map((entry, i) => (
+                      <div key={i} className={styles.loreEntry}>
+                        <div className={styles.loreEntryHeader}>
+                          <span className={styles.loreEntryName}>{entry.name || entry.comment || `Entry ${i + 1}`}</span>
+                          <div className={styles.loreEntryMeta}>
+                            {!entry.enabled && <span className={styles.loreDisabled}>Disabled</span>}
+                            <span className={styles.lorePriority}>P{entry.priority ?? 0}</span>
+                          </div>
+                        </div>
+                        {entry.keys.length > 0 && (
+                          <div className={styles.loreKeys}>
+                            {entry.keys.map((key, ki) => (
+                              <span key={ki} className={styles.loreKey}>{key}</span>
+                            ))}
+                          </div>
+                        )}
+                        <pre className={styles.loreContent}>{entry.content}</pre>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </>
             ) : (
               <p className={styles.emptyText}>No embedded lorebook for this character.</p>
             )}
