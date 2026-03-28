@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Sparkles, Check, Loader2, WifiOff, ChevronDown, BookOpen, RefreshCw } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useLinkedInstances, useInstallToLumiverse } from '../../hooks/useLumiverse';
-import { useIsInstalled, useIsWorldBookInstalled } from '../../hooks/useInstallManifest';
+import { useIsInstalled, useIsWorldBookInstalled, getCardSlug, dismissInstallGuess } from '../../hooks/useInstallManifest';
 import { useQueryClient } from '@tanstack/react-query';
 import type { UnifiedCharacterCard } from '../../types/character';
 import type { UnifiedWorldBook } from '../../types/worldbook';
@@ -21,9 +21,11 @@ const InstallButton: React.FC<Props> = ({ characterId, source, card, worldBook, 
   const { isAuthenticated } = useAuth();
   const { data: instances } = useLinkedInstances();
   const installMutation = useInstallToLumiverse();
-  const { isInstalled: isCharInstalled } = useIsInstalled(card);
+  const { isInstalled: isCharInstalled, isGuess: isCharGuess } = useIsInstalled(card);
   const { isInstalled: isWbInstalled } = useIsWorldBookInstalled(worldBook);
-  const isInstalled = isCharInstalled || isWbInstalled;
+  const [dismissed, setDismissed] = useState(false);
+  const isInstalled = (isCharInstalled && !(isCharGuess && dismissed)) || isWbInstalled;
+  const isGuess = isCharGuess && !dismissed;
   const queryClient = useQueryClient();
   const [success, setSuccess] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -45,6 +47,11 @@ const InstallButton: React.FC<Props> = ({ characterId, source, card, worldBook, 
     return () => document.removeEventListener('mousedown', handler);
   }, [menuOpen]);
 
+  const handleDismissGuess = () => {
+    if (card) dismissInstallGuess(getCardSlug(card));
+    setDismissed(true);
+  };
+
   const doInstall = async (includeWorldbook: boolean) => {
     setMenuOpen(false);
     if (disabled) return;
@@ -56,6 +63,7 @@ const InstallButton: React.FC<Props> = ({ characterId, source, card, worldBook, 
         characterId,
         source,
         includeWorldbook,
+        chubSlug: source === 'chub' ? characterId.toLowerCase() : undefined,
       });
 
       if (result.success) {
@@ -133,6 +141,12 @@ const InstallButton: React.FC<Props> = ({ characterId, source, card, worldBook, 
             <span>Install with Lorebook</span>
           </button>
         </div>
+      )}
+
+      {isGuess && !installMutation.isPending && !success && (
+        <button className={styles.guessHint} onClick={handleDismissGuess}>
+          Not this card?
+        </button>
       )}
     </div>
   );

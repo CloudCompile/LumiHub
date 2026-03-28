@@ -143,7 +143,7 @@ link.delete('/instances/:id', requireAuth, async (c) => {
 link.post('/install', requireAuth, async (c) => {
     const userId = c.get('userId');
     const body = await c.req.json();
-    const { instance_id, character_id, source, include_worldbook } = body;
+    const { instance_id, character_id, source, include_worldbook, chub_slug } = body;
 
     if (!instance_id || !character_id) {
         return c.json({ error: 'instance_id and character_id are required' }, 400);
@@ -170,6 +170,7 @@ link.post('/install', requireAuth, async (c) => {
             characterName: character_id,
             importUrl: `https://chub.ai/characters/${character_id}`,
             importEmbeddedWorldbook: !!include_worldbook,
+            chubSlug: (chub_slug || character_id).toLowerCase(),
         };
     } else {
         // For LumiHub characters, fetch the card

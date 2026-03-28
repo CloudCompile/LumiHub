@@ -48,6 +48,28 @@ export function getWorldBookSlug(book: UnifiedWorldBook): string {
   return `${creator}/${name}`;
 }
 
+// ── Dismissed guess tracking ──────────────────────────────────────────
+
+const DISMISSED_KEY = 'lumihub:dismissed-install-guesses';
+
+function getDismissedGuesses(): Set<string> {
+  try {
+    const raw = localStorage.getItem(DISMISSED_KEY);
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+/** Persist a dismissed guess so the user won't see it again. */
+export function dismissInstallGuess(slug: string): void {
+  const set = getDismissedGuesses();
+  set.add(slug);
+  localStorage.setItem(DISMISSED_KEY, JSON.stringify([...set]));
+}
+
+// ── Fetching ──────────────────────────────────────────────────────────
+
 async function fetchManifest(): Promise<ManifestResponse> {
   const res = await fetch('/api/v1/link/manifest', { credentials: 'include' });
   if (!res.ok) return { entries: [], instance_id: null };
@@ -68,21 +90,47 @@ export function useInstallManifest() {
 }
 
 /** Check if a specific character card is installed on the user's Lumiverse instance. */
-export function useIsInstalled(card?: UnifiedCharacterCard): { isInstalled: boolean; entry: ManifestEntry | null } {
+export function useIsInstalled(card?: UnifiedCharacterCard): { isInstalled: boolean; isGuess: boolean; entry: ManifestEntry | null } {
   const { data } = useInstallManifest();
-  if (!card || !data?.entries.length) return { isInstalled: false, entry: null };
+  if (!card || !data?.entries.length) return { isInstalled: false, isGuess: false, entry: null };
 
   const slug = getCardSlug(card);
   const entry = data.entries.find((e) => e.slug === slug && e.type === 'character') ?? null;
-  return { isInstalled: !!entry, entry };
+  if (entry) return { isInstalled: true, isGuess: false, entry };
+
+  // Fallback: older Lumiverse installs may have a derived slug instead of the Chub fullPath
+  if (card.source === 'chub') {
+    const derived = `${slugify(card.creator || 'unknown')}/${slugify(card.name || 'unnamed')}`;
+    if (derived !== slug) {
+      const guessEntry = data.entries.find((e) => e.slug === derived && e.type === 'character') ?? null;
+      if (guessEntry && !getDismissedGuesses().has(slug)) {
+        return { isInstalled: true, isGuess: true, entry: guessEntry };
+      }
+    }
+  }
+
+  return { isInstalled: false, isGuess: false, entry: null };
 }
 
 /** Check if a specific world book is installed on the user's Lumiverse instance. */
-export function useIsWorldBookInstalled(book?: UnifiedWorldBook): { isInstalled: boolean; entry: ManifestEntry | null } {
+export function useIsWorldBookInstalled(book?: UnifiedWorldBook): { isInstalled: boolean; isGuess: boolean; entry: ManifestEntry | null } {
   const { data } = useInstallManifest();
-  if (!book || !data?.entries.length) return { isInstalled: false, entry: null };
+  if (!book || !data?.entries.length) return { isInstalled: false, isGuess: false, entry: null };
 
   const slug = getWorldBookSlug(book);
   const entry = data.entries.find((e) => e.slug === slug && e.type === 'worldbook') ?? null;
-  return { isInstalled: !!entry, entry };
+  if (entry) return { isInstalled: true, isGuess: false, entry };
+
+  // Fallback: older Lumiverse installs may have a derived slug instead of the Chub fullPath
+  if (book.source === 'chub') {
+    const derived = `${slugify(book.creator || 'unknown')}/${slugify(book.name || 'unnamed')}`;
+    if (derived !== slug) {
+      const guessEntry = data.entries.find((e) => e.slug === derived && e.type === 'worldbook') ?? null;
+      if (guessEntry && !getDismissedGuesses().has(slug)) {
+        return { isInstalled: true, isGuess: true, entry: guessEntry };
+      }
+    }
+  }
+
+  return { isInstalled: false, isGuess: false, entry: null };
 }
