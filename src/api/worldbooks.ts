@@ -1,3 +1,5 @@
+import { apiFetch } from './client';
+
 const BASE = '/api/v1/worldbooks';
 
 export interface WorldbookListParams {
@@ -38,7 +40,7 @@ export async function createWorldbook(
   if (meta.tags) form.append('tags', meta.tags);
   if (image) form.append('image', image);
 
-  const res = await fetch(BASE, { method: 'POST', body: form });
+  const res = await apiFetch(BASE, { method: 'POST', body: form });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.message || `Failed to create worldbook: ${res.status}`);
@@ -47,7 +49,7 @@ export async function createWorldbook(
 }
 
 export async function deleteWorldbook(id: string): Promise<void> {
-  const res = await fetch(`${BASE}/${id}`, { method: 'DELETE' });
+  const res = await apiFetch(`${BASE}/${id}`, { method: 'DELETE' });
   if (!res.ok) throw new Error(`Failed to delete worldbook: ${res.status}`);
 }
 

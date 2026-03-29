@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { apiFetch } from './client';
 
 export const ProfileAssetSchema = z.object({
   id: z.string(),
@@ -13,7 +14,7 @@ export const ProfileAssetSchema = z.object({
 export type ProfileAsset = z.infer<typeof ProfileAssetSchema>;
 
 export async function fetchProfileAssets(): Promise<ProfileAsset[]> {
-  const res = await fetch('/api/v1/profile-assets');
+  const res = await apiFetch('/api/v1/users/me/assets');
   if (!res.ok) {
     const data = await res.json().catch(() => null);
     throw new Error(data?.error || 'Failed to fetch assets');
@@ -25,7 +26,7 @@ export async function uploadProfileAsset(file: File): Promise<ProfileAsset> {
   const formData = new FormData();
   formData.append('file', file);
 
-  const res = await fetch('/api/v1/profile-assets', {
+  const res = await apiFetch('/api/v1/users/me/assets', {
     method: 'POST',
     body: formData,
   });
@@ -38,7 +39,7 @@ export async function uploadProfileAsset(file: File): Promise<ProfileAsset> {
 }
 
 export async function deleteProfileAsset(id: string): Promise<void> {
-  const res = await fetch(`/api/v1/profile-assets/${id}`, {
+  const res = await apiFetch(`/api/v1/users/me/assets/${id}`, {
     method: 'DELETE',
   });
 

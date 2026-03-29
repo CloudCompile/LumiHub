@@ -32,9 +32,9 @@ const WorldbookCard: React.FC<Props> = ({ worldbook, blurNsfw = true, onClick })
   return (
     <div className={styles.card} onClick={onClick}>
       <div className={styles.imageArea}>
-        {worldbook.avatarUrl ? (
+        {worldbook.previewUrl || worldbook.avatarUrl ? (
           <LazyImage
-            src={worldbook.avatarUrl}
+            src={worldbook.previewUrl || worldbook.avatarUrl}
             alt={worldbook.name}
             className={`${styles.image} ${shouldBlur ? styles.imageBlurred : ''}`}
             fallback={<div className={styles.placeholder}>{worldbook.name.charAt(0)}</div>}

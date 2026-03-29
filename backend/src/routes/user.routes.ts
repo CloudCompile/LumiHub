@@ -1,11 +1,38 @@
 import { Hono } from 'hono';
-import { jwt } from 'hono/jwt';
-import { env } from '../env.ts';
 import { AppDataSource } from '../db/connection.ts';
 import { User } from '../entities/User.entity.ts';
 import { sanitizeProfileHtml, sanitizeProfileCss } from '../services/profile-sanitizer.service.ts';
+import { requireAuth, type AuthEnv } from '../middleware/requireAuth.middleware.ts';
 
-const users = new Hono();
+const users = new Hono<AuthEnv>();
+
+function buildSettings(user: User) {
+    return {
+        customDisplayName: user.custom_display_name || '',
+        nsfwEnabled: user.nsfw_enabled,
+        nsfwUnblurred: user.nsfw_unblurred,
+        defaultIncludeTags: user.default_include_tags,
+        defaultExcludeTags: user.default_exclude_tags,
+    };
+}
+
+function buildCurrentUserResponse(user: User) {
+    return {
+        id: user.id,
+        discordId: user.discord_id,
+        username: user.username,
+        displayName: user.custom_display_name || user.display_name,
+        avatar: user.avatar,
+        banner: user.banner,
+        role: user.role,
+        createdAt: user.created_at,
+        settings: buildSettings(user),
+    };
+}
+
+async function loadCurrentUser(userId: string): Promise<User | null> {
+    return AppDataSource.getRepository(User).findOneBy({ id: userId });
+}
 
 /** Get public user profile by Discord ID */
 users.get('/profile/:discordId', async (c) => {
@@ -30,145 +57,117 @@ users.get('/profile/:discordId', async (c) => {
     });
 });
 
-/** Protect all user routes with JWT */
-users.use('/*', jwt({
-    secret: env.JWT_SECRET,
-    cookie: 'lumihub_session',
-    alg: 'HS256'
-}));
+for (const mePath of ['/@me', '/me'] as const) {
+    /** Save profile HTML and/or CSS (Profile Studio) */
+    users.put(`${mePath}/profile`, requireAuth, async (c) => {
+        const user = await loadCurrentUser(c.get('userId'));
 
-/** Save profile HTML and/or CSS (Profile Studio) */
-users.put('/@me/profile', async (c) => {
-    const payload = c.get('jwtPayload') as { id: string };
-    const userRepository = AppDataSource.getRepository(User);
-    const user = await userRepository.findOneBy({ id: payload.id });
-
-    if (!user) {
-        return c.json({ error: 'User not found' }, 404);
-    }
-
-    const body = await c.req.json();
-
-    if (typeof body.html === 'string') {
-        if (body.html.length > 100000) {
-            return c.json({ error: 'HTML too large (max 100KB)' }, 400);
+        if (!user) {
+            return c.json({ error: 'User not found' }, 404);
         }
-        user.custom_html = body.html.trim().length > 0 ? sanitizeProfileHtml(body.html) : null;
-    }
 
-    if (typeof body.css === 'string') {
-        if (body.css.length > 50000) {
-            return c.json({ error: 'CSS too large (max 50KB)' }, 400);
+        const body = await c.req.json();
+
+        if (typeof body.html === 'string') {
+            if (body.html.length > 100000) {
+                return c.json({ error: 'HTML too large (max 100KB)' }, 400);
+            }
+            user.custom_html = body.html.trim().length > 0 ? sanitizeProfileHtml(body.html) : null;
         }
-        user.custom_css = body.css.trim().length > 0 ? sanitizeProfileCss(body.css) : null;
-    }
 
-    await userRepository.save(user);
+        if (typeof body.css === 'string') {
+            if (body.css.length > 50000) {
+                return c.json({ error: 'CSS too large (max 50KB)' }, 400);
+            }
+            user.custom_css = body.css.trim().length > 0 ? sanitizeProfileCss(body.css) : null;
+        }
 
-    return c.json({
-        message: 'Profile updated',
-        html: user.custom_html,
-        css: user.custom_css,
+        await AppDataSource.getRepository(User).save(user);
+
+        return c.json({
+            message: 'Profile updated',
+            html: user.custom_html,
+            css: user.custom_css,
+        });
     });
-});
 
-/** Reset profile to defaults */
-users.post('/@me/profile/reset', async (c) => {
-    const payload = c.get('jwtPayload') as { id: string };
-    const userRepository = AppDataSource.getRepository(User);
-    const user = await userRepository.findOneBy({ id: payload.id });
+    /** Reset profile to defaults */
+    users.post(`${mePath}/profile/reset`, requireAuth, async (c) => {
+        const user = await loadCurrentUser(c.get('userId'));
 
-    if (!user) {
-        return c.json({ error: 'User not found' }, 404);
-    }
+        if (!user) {
+            return c.json({ error: 'User not found' }, 404);
+        }
 
-    user.custom_html = null;
-    user.custom_css = null;
-    await userRepository.save(user);
+        user.custom_html = null;
+        user.custom_css = null;
+        await AppDataSource.getRepository(User).save(user);
 
-    return c.json({ message: 'Profile reset to default' });
-});
-
-/** Get current user preferences */
-users.get('/@me/settings', async (c) => {
-    const payload = c.get('jwtPayload') as { id: string };
-    const userRepository = AppDataSource.getRepository(User);
-    const user = await userRepository.findOneBy({ id: payload.id });
-
-    if (!user) {
-        return c.json({ error: "User not found" }, 404);
-    }
-
-    return c.json({
-        customDisplayName: user.custom_display_name || '',
-        nsfwEnabled: user.nsfw_enabled,
-        nsfwUnblurred: user.nsfw_unblurred,
-        defaultIncludeTags: user.default_include_tags,
-        defaultExcludeTags: user.default_exclude_tags,
+        return c.json({ message: 'Profile reset to default' });
     });
-});
 
-/** Update current user preferences */
-users.put('/@me/settings', async (c) => {
-    const payload = c.get('jwtPayload') as { id: string };
-    const userRepository = AppDataSource.getRepository(User);
-    const user = await userRepository.findOneBy({ id: payload.id });
+    /** Get current user preferences */
+    users.get(`${mePath}/settings`, requireAuth, async (c) => {
+        const user = await loadCurrentUser(c.get('userId'));
 
-    if (!user) {
-        return c.json({ error: "User not found" }, 404);
-    }
+        if (!user) {
+            return c.json({ error: "User not found" }, 404);
+        }
 
-    const body = await c.req.json();
-
-    if (typeof body.customDisplayName === 'string') {
-        const trimmed = body.customDisplayName.trim();
-        user.custom_display_name = trimmed.length > 0 ? trimmed.slice(0, 64) : null;
-    }
-    if (typeof body.nsfwEnabled === 'boolean') {
-        user.nsfw_enabled = body.nsfwEnabled;
-    }
-    if (typeof body.nsfwUnblurred === 'boolean') {
-        user.nsfw_unblurred = body.nsfwUnblurred;
-    }
-    if (Array.isArray(body.defaultIncludeTags)) {
-        user.default_include_tags = body.defaultIncludeTags
-            .filter((t: unknown) => typeof t === 'string')
-            .map((t: string) => t.trim().toLowerCase())
-            .filter(Boolean)
-            .slice(0, 50);
-    }
-    if (Array.isArray(body.defaultExcludeTags)) {
-        user.default_exclude_tags = body.defaultExcludeTags
-            .filter((t: unknown) => typeof t === 'string')
-            .map((t: string) => t.trim().toLowerCase())
-            .filter(Boolean)
-            .slice(0, 50);
-    }
-
-    await userRepository.save(user);
-
-    return c.json({ message: 'Settings updated' });
-});
-
-/** Get current user profile */
-users.get('/@me', async (c) => {
-    const payload = c.get('jwtPayload') as { id: string, username: string, exp: number, iss: string };
-    const userRepository = AppDataSource.getRepository(User);
-    const user = await userRepository.findOneBy({ id: payload.id });
-
-    if (!user) {
-        return c.json({ error: "User not found" }, 404);
-    }
-
-    return c.json({
-        id: user.id,
-        discordId: user.discord_id,
-        username: user.username,
-        displayName: user.custom_display_name || user.display_name,
-        avatar: user.avatar,
-        role: user.role,
-        createdAt: user.created_at
+        return c.json(buildSettings(user));
     });
-});
+
+    /** Update current user preferences */
+    users.put(`${mePath}/settings`, requireAuth, async (c) => {
+        const userRepository = AppDataSource.getRepository(User);
+        const user = await loadCurrentUser(c.get('userId'));
+
+        if (!user) {
+            return c.json({ error: "User not found" }, 404);
+        }
+
+        const body = await c.req.json();
+
+        if (typeof body.customDisplayName === 'string') {
+            const trimmed = body.customDisplayName.trim();
+            user.custom_display_name = trimmed.length > 0 ? trimmed.slice(0, 64) : null;
+        }
+        if (typeof body.nsfwEnabled === 'boolean') {
+            user.nsfw_enabled = body.nsfwEnabled;
+        }
+        if (typeof body.nsfwUnblurred === 'boolean') {
+            user.nsfw_unblurred = body.nsfwUnblurred;
+        }
+        if (Array.isArray(body.defaultIncludeTags)) {
+            user.default_include_tags = body.defaultIncludeTags
+                .filter((t: unknown) => typeof t === 'string')
+                .map((t: string) => t.trim().toLowerCase())
+                .filter(Boolean)
+                .slice(0, 50);
+        }
+        if (Array.isArray(body.defaultExcludeTags)) {
+            user.default_exclude_tags = body.defaultExcludeTags
+                .filter((t: unknown) => typeof t === 'string')
+                .map((t: string) => t.trim().toLowerCase())
+                .filter(Boolean)
+                .slice(0, 50);
+        }
+
+        await userRepository.save(user);
+
+        return c.json({ message: 'Settings updated', settings: buildSettings(user) });
+    });
+
+    /** Get current user profile */
+    users.get(mePath, requireAuth, async (c) => {
+        const user = await loadCurrentUser(c.get('userId'));
+
+        if (!user) {
+            return c.json({ error: "User not found" }, 404);
+        }
+
+        return c.json(buildCurrentUserResponse(user));
+    });
+}
 
 export default users;

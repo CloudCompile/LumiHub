@@ -1,4 +1,5 @@
 import type { ChubCharacterCard } from './chub';
+import { toThumbnailUrl, toUploadUrl } from '../utils/media';
 
 export interface CharacterAsset {
   type: string;
@@ -64,6 +65,7 @@ export interface UnifiedCharacterCard {
   tags: string[];
   nsfw: boolean;
   avatarUrl: string | null;
+  previewUrl?: string | null;
   downloads: number;
   stars?: number;
   favorites?: number;
@@ -71,16 +73,6 @@ export interface UnifiedCharacterCard {
   createdAt: string | null;
   source: CharacterSource;
   raw: LumiHubCharacter | ChubCharacterCard;
-}
-
-/** Normalizes image paths from the backend (handles backslashes and missing prefixes). */
-function normalizeImagePath(path: string | null): string | null {
-  if (!path) return null;
-  let normalized = path.replace(/\\/g, '/');
-  if (!normalized.startsWith('uploads/')) {
-    normalized = `uploads/${normalized}`;
-  }
-  return `/${normalized}`;
 }
 
 /** Converts a LumiHub backend character into a UnifiedCharacterCard. */
@@ -94,7 +86,8 @@ export function fromLumiHub(char: LumiHubCharacter): UnifiedCharacterCard {
     tagline: char.description?.slice(0, 200) || char.creator_notes || '',
     tags: char.tags,
     nsfw: char.tags.some((t) => t.toLowerCase() === 'nsfw'),
-    avatarUrl: normalizeImagePath(char.image_path),
+    avatarUrl: toUploadUrl(char.image_path),
+    previewUrl: toThumbnailUrl(char.image_path),
     downloads: char.downloads,
     rating: null,
     createdAt: char.created_at,
@@ -113,6 +106,7 @@ export function fromChub(card: ChubCharacterCard): UnifiedCharacterCard {
     tags: card.tags,
     nsfw: card.nsfw,
     avatarUrl: card.avatarUrl,
+    previewUrl: card.avatarUrl,
     downloads: card.downloadCount ?? 0,
     stars: card.starCount ?? 0,
     favorites: card.favorites ?? 0,

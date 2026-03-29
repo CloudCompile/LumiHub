@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from './useAuth';
+import { apiFetch } from '../api/client';
 
 export interface LinkedInstance {
   id: string;
@@ -17,7 +18,7 @@ interface InstallResult {
 }
 
 async function fetchLinkedInstances(): Promise<LinkedInstance[]> {
-  const res = await fetch('/api/v1/link/instances', { credentials: 'include' });
+  const res = await apiFetch('/api/v1/links/instances');
   if (!res.ok) return [];
   const json = await res.json();
   return json.data ?? [];
@@ -30,9 +31,8 @@ async function installToInstance(params: {
   includeWorldbook?: boolean;
   chubSlug?: string;
 }): Promise<InstallResult> {
-  const res = await fetch('/api/v1/link/install', {
+  const res = await apiFetch('/api/v1/links/install', {
     method: 'POST',
-    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       instance_id: params.instanceId,
@@ -46,9 +46,8 @@ async function installToInstance(params: {
 }
 
 async function unlinkInstance(instanceId: string): Promise<void> {
-  await fetch(`/api/v1/link/instances/${instanceId}`, {
+  await apiFetch(`/api/v1/links/instances/${instanceId}`, {
     method: 'DELETE',
-    credentials: 'include',
   });
 }
 

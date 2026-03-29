@@ -1,6 +1,4 @@
 import { Hono } from 'hono';
-import { jwt } from 'hono/jwt';
-import { env } from '../env.ts';
 import { AppDataSource } from '../db/connection.ts';
 import { User } from '../entities/User.entity.ts';
 import { ProfileAsset } from '../entities/ProfileAsset.entity.ts';
@@ -9,22 +7,18 @@ import { FILE_SIZE_LIMITS, ALLOWED_MIME_TYPES } from '../utils/constants.ts';
 import { logger } from '../utils/logger.ts';
 import path from 'node:path';
 import { mkdir } from 'node:fs/promises';
+import { requireAuth, type AuthEnv } from '../middleware/requireAuth.middleware.ts';
 
-const assetsRoutes = new Hono();
+const assetsRoutes = new Hono<AuthEnv>();
 
-assetsRoutes.use('/*', jwt({
-    secret: env.JWT_SECRET,
-    cookie: 'lumihub_session',
-    alg: 'HS256'
-}));
+assetsRoutes.use('*', requireAuth);
 
 /** List all assets for current user */
 assetsRoutes.get('/', async (c) => {
-    const payload = c.get('jwtPayload') as { id: string };
     const assetRepository = AppDataSource.getRepository(ProfileAsset);
 
     const assets = await assetRepository.find({
-        where: { owner_id: payload.id },
+        where: { owner_id: c.get('userId') },
         order: { created_at: 'DESC' }
     });
 
@@ -33,11 +27,10 @@ assetsRoutes.get('/', async (c) => {
 
 /** Upload a new asset */
 assetsRoutes.post('/', async (c) => {
-    const payload = c.get('jwtPayload') as { id: string };
     const userRepository = AppDataSource.getRepository(User);
     const assetRepository = AppDataSource.getRepository(ProfileAsset);
 
-    const user = await userRepository.findOneBy({ id: payload.id });
+    const user = await userRepository.findOneBy({ id: c.get('userId') });
     if (!user) return c.json({ error: 'User not found' }, 404);
 
     const formData = await c.req.formData().catch(() => null);
@@ -48,8 +41,8 @@ assetsRoutes.post('/', async (c) => {
         return c.json({ error: 'Missing or invalid file' }, 400);
     }
 
-    const isImage = ALLOWED_MIME_TYPES.IMAGE.includes(file.type as any);
-    const isVideo = ALLOWED_MIME_TYPES.VIDEO.includes(file.type as any);
+    const isImage = ALLOWED_MIME_TYPES.IMAGE.includes(file.type as (typeof ALLOWED_MIME_TYPES.IMAGE)[number]);
+    const isVideo = ALLOWED_MIME_TYPES.VIDEO.includes(file.type as (typeof ALLOWED_MIME_TYPES.VIDEO)[number]);
 
     if (!isImage && !isVideo) {
         return c.json({ error: `Unsupported file type: ${file.type}` }, 400);
@@ -96,25 +89,25 @@ assetsRoutes.post('/', async (c) => {
         logger.info(`User ${user.id} uploaded profile asset: ${resultFilePath}`);
 
         return c.json(newAsset, 201);
-    } catch (e: any) {
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown processing error';
         logger.error(`Error processing profile asset for user ${user.id}:`, e);
-        return c.json({ error: 'Processing failed', message: e.message }, 500);
+        return c.json({ error: 'Processing failed', message }, 500);
     }
 });
 
 /** Delete an asset */
 assetsRoutes.delete('/:id', async (c) => {
-    const payload = c.get('jwtPayload') as { id: string };
     const assetId = c.req.param('id');
     const assetRepository = AppDataSource.getRepository(ProfileAsset);
 
-    const asset = await assetRepository.findOneBy({ id: assetId, owner_id: payload.id });
+    const asset = await assetRepository.findOneBy({ id: assetId, owner_id: c.get('userId') });
     if (!asset) return c.json({ error: 'Asset not found or not owned by you' }, 404);
 
     await deleteAssetFile(asset.file_path);
     await assetRepository.remove(asset);
 
-    logger.info(`User ${payload.id} deleted profile asset: ${asset.file_path}`);
+    logger.info(`User ${c.get('userId')} deleted profile asset: ${asset.file_path}`);
     return c.json({ message: 'Asset deleted' });
 });
 

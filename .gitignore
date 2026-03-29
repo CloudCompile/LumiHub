@@ -30,6 +30,7 @@ backend/.env
 backend/bun.lock
 backend/uploads/characters/*
 backend/uploads/profile_assets/*
+backend/uploads/.cache/thumbs*
 docker-compose.yml
 .gitignore
 .env

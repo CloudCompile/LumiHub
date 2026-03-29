@@ -1,9 +1,8 @@
 import type { MiddlewareHandler } from 'hono';
 import { getCookie } from 'hono/cookie';
-import { verify } from 'hono/jwt';
 import { AppDataSource } from '../db/connection.ts';
 import { User } from '../entities/User.entity.ts';
-import { env } from '../env.ts';
+import { verifySessionToken } from '../services/auth.service.ts';
 import type { AuthEnv } from './requireAuth.middleware.ts';
 
 /**
@@ -18,9 +17,10 @@ export const requireModerator: MiddlewareHandler<AuthEnv> = async (c, next) => {
 
   let userId: string;
   try {
-    const payload = await verify(token, env.JWT_SECRET, 'HS256');
+    const payload = await verifySessionToken(token);
     userId = payload.id as string;
     c.set('userId', userId);
+    c.set('session', payload);
   } catch {
     return c.json({ error: 'Unauthorized', message: 'Invalid or expired token', statusCode: 401 }, 401);
   }

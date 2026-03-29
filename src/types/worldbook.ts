@@ -1,3 +1,5 @@
+import { toThumbnailUrl, toUploadUrl } from '../utils/media';
+
 export interface WorldBookEntry {
   keys: string[];
   content: string;
@@ -61,20 +63,12 @@ export interface UnifiedWorldBook {
   nsfw: boolean;
   creator: string;
   avatarUrl: string | null;
+  previewUrl?: string | null;
   downloads: number;
   rating: number | null;
   createdAt: string | null;
   source: WorldBookSource;
   raw: LumiWorldBook | ChubWorldBook;
-}
-
-function normalizeImagePath(path: string | null): string | null {
-  if (!path) return null;
-  let normalized = path.replace(/\\/g, '/');
-  if (!normalized.startsWith('uploads/')) {
-    normalized = `uploads/${normalized}`;
-  }
-  return `/${normalized}`;
 }
 
 export function fromLumiHub(wb: LumiWorldBook): UnifiedWorldBook {
@@ -87,7 +81,8 @@ export function fromLumiHub(wb: LumiWorldBook): UnifiedWorldBook {
     tags: wb.tags,
     nsfw: wb.tags.some((t) => t.toLowerCase() === 'nsfw'),
     creator: wb.creator || 'Unknown',
-    avatarUrl: normalizeImagePath(wb.image_path),
+    avatarUrl: toUploadUrl(wb.image_path),
+    previewUrl: toThumbnailUrl(wb.image_path),
     downloads: wb.downloads,
     rating: null,
     createdAt: wb.created_at,
@@ -109,6 +104,7 @@ export function fromChubLorebook(lb: ChubWorldBook): UnifiedWorldBook {
     nsfw: lb.nsfw_image || lb.nsfw || hasNsfwTag,
     creator,
     avatarUrl: lb.avatarUrl,
+    previewUrl: lb.avatarUrl,
     downloads: lb.starCount,
     rating: lb.rating ?? null,
     createdAt: lb.createdAt,

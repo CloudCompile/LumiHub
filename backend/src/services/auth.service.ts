@@ -1,5 +1,5 @@
 import { env } from "../env.ts";
-import { sign } from "hono/jwt";
+import { sign, verify } from "hono/jwt";
 import { randomBytes, createHash } from "crypto";
 
 type DiscordTokenResponse = {
@@ -9,6 +9,17 @@ type DiscordTokenResponse = {
     refresh_token: string;
     scope: string;
 }
+
+export interface SessionPayload extends Record<string, string | number> {
+    id: string;
+    username: string;
+    role: string;
+    exp: number;
+    iss: string;
+}
+
+export const SESSION_TTL_SECONDS = 60 * 15;
+export const REFRESH_TOKEN_PATH = '/api/v1/auth';
 
 export function getDiscordAuthUrl(state: string) {
     const redirectUrlParams = new URLSearchParams({
@@ -76,15 +87,20 @@ export async function fetchDiscordUser(token: string) {
     }
 }
 
-export async function createSessionToken(user: any) {
-    const payload = {
+export async function createSessionToken(user: { id: string; username: string; role?: string }) {
+    const payload: SessionPayload = {
         id: user.id,
         username: user.username,
-        exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7,
+        role: user.role ?? 'user',
+        exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS,
         iss: 'LumiHub'
     };
 
     return await sign(payload, env.JWT_SECRET, 'HS256');
+}
+
+export async function verifySessionToken(token: string): Promise<SessionPayload> {
+    return await verify(token, env.JWT_SECRET, 'HS256') as unknown as SessionPayload;
 }
 
 export function createRefreshToken() {

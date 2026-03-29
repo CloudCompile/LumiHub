@@ -26,9 +26,9 @@ const CharacterCard: React.FC<Props> = ({ card, blurNsfw = true, onClick }) => {
   return (
     <div className={styles.card} onClick={onClick}>
       <div className={styles.imageArea}>
-        {card.avatarUrl ? (
+        {card.previewUrl || card.avatarUrl ? (
           <LazyImage
-            src={card.avatarUrl}
+            src={card.previewUrl || card.avatarUrl}
             alt={card.name}
             className={`${styles.image} ${shouldBlur ? styles.imageBlurred : ''}`}
             fallback={<div className={styles.placeholder}>{card.name.charAt(0)}</div>}

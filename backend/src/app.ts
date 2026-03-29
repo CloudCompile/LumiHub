@@ -10,6 +10,7 @@ import userRoutes from './routes/user.routes.ts';
 import linkRoutes from './routes/link.routes.ts';
 import moderationRoutes from './routes/moderation.routes.ts';
 import profileAssetsRoutes from './routes/profile-assets.routes.ts';
+import mediaRoutes, { uploadCacheControl } from './routes/media.routes.ts';
 import { logger } from './utils/logger.ts';
 import { env } from './env.ts';
 import { opengraphMiddleware, staticPageOgMiddleware } from './middleware/opengraph.middleware.ts';
@@ -32,6 +33,12 @@ app.use('*', async (c, next) => {
   logger.info(`${c.req.method} ${c.req.path} - ${c.res.status} (${duration}ms)`);
 });
 
+app.use('/uploads/*', async (c, next) => {
+  await next();
+  if (c.res.ok) {
+    c.res.headers.set('Cache-Control', uploadCacheControl);
+  }
+});
 app.use('/uploads/*', serveStatic({ root: './' }));
 
 // Serve built frontend in production
@@ -43,8 +50,12 @@ app.use('*', errorHandler);
 app.route('/api/v1/characters', charactersRoutes);
 app.route('/api/v1/worldbooks', worldbooksRoutes);
 app.route('/api/v1/auth', authRoutes);
+app.route('/api/v1/media', mediaRoutes);
+app.route('/api/v1/users/me/assets', profileAssetsRoutes);
 app.route('/api/v1/user', userRoutes);
+app.route('/api/v1/users', userRoutes);
 app.route('/api/v1/link', linkRoutes);
+app.route('/api/v1/links', linkRoutes);
 app.route('/api/v1/moderation', moderationRoutes);
 app.route('/api/v1/profile-assets', profileAssetsRoutes);
 

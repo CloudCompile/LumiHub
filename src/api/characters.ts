@@ -1,4 +1,5 @@
 import type { LumiHubCharacter, CharacterImage } from '../types/character';
+import { apiFetch } from './client';
 
 const BASE = '/api/v1/characters';
 
@@ -67,7 +68,7 @@ export async function createCharacter(
   form.append('character_data', JSON.stringify(data));
   if (image) form.append('image', image);
 
-  const res = await fetch(BASE, { method: 'POST', body: form });
+  const res = await apiFetch(BASE, { method: 'POST', body: form });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.message || `Failed to create character: ${res.status}`);
@@ -85,7 +86,7 @@ export async function updateCharacter(
   form.append('character_data', JSON.stringify(data));
   if (image) form.append('image', image);
 
-  const res = await fetch(`${BASE}/${id}`, { method: 'PUT', body: form });
+  const res = await apiFetch(`${BASE}/${id}`, { method: 'PUT', body: form });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.message || `Failed to update character: ${res.status}`);
@@ -95,7 +96,7 @@ export async function updateCharacter(
 
 /** Deletes a character by UUID. */
 export async function deleteCharacter(id: string): Promise<void> {
-  const res = await fetch(`${BASE}/${id}`, { method: 'DELETE' });
+  const res = await apiFetch(`${BASE}/${id}`, { method: 'DELETE' });
   if (!res.ok) throw new Error(`Failed to delete character: ${res.status}`);
 }
 
@@ -108,7 +109,7 @@ export async function createCharacterFromCharx(
   form.append('character_data', JSON.stringify(data));
   form.append('charx_file', charxFile);
 
-  const res = await fetch(`${BASE}/charx`, { method: 'POST', body: form });
+  const res = await apiFetch(`${BASE}/charx`, { method: 'POST', body: form });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.message || `Failed to import .charx: ${res.status}`);

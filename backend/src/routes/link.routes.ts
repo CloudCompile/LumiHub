@@ -1,12 +1,12 @@
 import { Hono } from 'hono';
 import { requireAuth, type AuthEnv } from '../middleware/requireAuth.middleware.ts';
 import { getCookie } from 'hono/cookie';
-import { verify } from 'hono/jwt';
-import { env } from '../env.ts';
 import * as LinkService from '../services/link.service.ts';
 import * as CharacterService from '../services/characters.service.ts';
 import * as WorldbookService from '../services/worldbooks.service.ts';
 import { instanceManager } from '../ws/instance-connections.ts';
+import { env } from '../env.ts';
+import { verifySessionToken } from '../services/auth.service.ts';
 
 const link = new Hono<AuthEnv>();
 
@@ -23,8 +23,9 @@ link.get('/authorize', async (c, next) => {
     return c.redirect(`/api/v1/auth/discord?return_to=${encodeURIComponent(returnUrl)}`);
   }
   try {
-    const payload = await verify(token, env.JWT_SECRET, 'HS256');
+    const payload = await verifySessionToken(token);
     c.set('userId', payload.id as string);
+    c.set('session', payload);
   } catch {
     // Expired token — redirect to Discord login
     const returnUrl = c.req.url;

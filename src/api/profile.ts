@@ -1,5 +1,7 @@
+import { apiFetch } from './client';
+
 export async function saveProfile(data: { html?: string; css?: string }): Promise<{ html: string | null; css: string | null }> {
-  const res = await fetch('/api/v1/user/@me/profile', {
+  const res = await apiFetch('/api/v1/users/me/profile', {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -13,7 +15,7 @@ export async function saveProfile(data: { html?: string; css?: string }): Promis
 }
 
 export async function resetProfile(): Promise<void> {
-  const res = await fetch('/api/v1/user/@me/profile/reset', {
+  const res = await apiFetch('/api/v1/users/me/profile/reset', {
     method: 'POST',
   });
 

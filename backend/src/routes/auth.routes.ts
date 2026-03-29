@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { setCookie, getCookie, deleteCookie } from 'hono/cookie';
 import { env } from '../env.ts';
 import { randomUUID } from 'crypto';
-import { getDiscordAuthUrl, exchangeCode, fetchDiscordUser, createSessionToken, createRefreshToken, hashToken } from '../services/auth.service.ts';
+import { getDiscordAuthUrl, exchangeCode, fetchDiscordUser, createSessionToken, createRefreshToken, hashToken, REFRESH_TOKEN_PATH, SESSION_TTL_SECONDS } from '../services/auth.service.ts';
 import { upsertDiscordUser } from '../services/user.service.ts';
 import { AppDataSource } from '../db/connection.ts';
 import { User } from '../entities/User.entity.ts';
@@ -65,14 +65,14 @@ auth.get('/discord/callback', async (c) => {
         httpOnly: true,
         secure: env.NODE_ENV === 'production',
         path: '/',
-        maxAge: 60 * 15,
+        maxAge: SESSION_TTL_SECONDS,
         sameSite: 'Lax'
     });
 
     setCookie(c, 'refresh_token', refreshToken, {
         httpOnly: true,
         secure: env.NODE_ENV === 'production',
-        path: '/api/v1/auth/refresh',
+        path: REFRESH_TOKEN_PATH,
         maxAge: 60 * 60 * 24 * 30,
         sameSite: 'Strict'
     });
@@ -97,7 +97,7 @@ auth.post('/refresh', async (c) => {
 
     if (!user) {
         deleteCookie(c, 'lumihub_session', { path: '/' });
-        deleteCookie(c, 'refresh_token', { path: '/api/v1/auth/refresh' });
+        deleteCookie(c, 'refresh_token', { path: REFRESH_TOKEN_PATH });
         return c.json({ error: "Invalid refresh token" }, 401);
     }
 
@@ -112,14 +112,14 @@ auth.post('/refresh', async (c) => {
         httpOnly: true,
         secure: env.NODE_ENV === 'production',
         path: '/',
-        maxAge: 60 * 15,
+        maxAge: SESSION_TTL_SECONDS,
         sameSite: 'Lax'
     });
 
     setCookie(c, 'refresh_token', newRefreshToken, {
         httpOnly: true,
         secure: env.NODE_ENV === 'production',
-        path: '/api/v1/auth/refresh',
+        path: REFRESH_TOKEN_PATH,
         maxAge: 60 * 60 * 24 * 30,
         sameSite: 'Strict'
     });
@@ -132,6 +132,7 @@ auth.post('/refresh', async (c) => {
             displayName: user.display_name,
             avatar: user.avatar,
             banner: user.banner,
+            role: user.role,
             createdAt: user.created_at
         }
     }, 200);
@@ -152,7 +153,7 @@ auth.post('/logout', async (c) => {
     }
 
     deleteCookie(c, 'lumihub_session', { path: '/' });
-    deleteCookie(c, 'refresh_token', { path: '/api/v1/auth/refresh' });
+    deleteCookie(c, 'refresh_token', { path: REFRESH_TOKEN_PATH });
 
     return c.json({ message: "Logged out" }, 200);
 });

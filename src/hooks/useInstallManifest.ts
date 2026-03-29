@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from './useAuth';
 import type { UnifiedCharacterCard } from '../types/character';
 import type { UnifiedWorldBook } from '../types/worldbook';
+import { apiFetch } from '../api/client';
 
 export interface ManifestEntry {
   slug: string;
@@ -95,7 +96,7 @@ export function dismissInstallGuess(slug: string): void {
 // ── Fetching ──────────────────────────────────────────────────────────
 
 async function fetchManifest(): Promise<ManifestResponse> {
-  const res = await fetch('/api/v1/link/manifest', { credentials: 'include' });
+  const res = await apiFetch('/api/v1/links/manifest');
   if (!res.ok) return { entries: [], instance_id: null };
   return res.json();
 }

@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Check, AlertCircle, LogOut } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth';
+import { bootstrapAuth, useAuth } from '../../hooks/useAuth';
+import { apiFetch } from '../../api/client';
 import styles from './Settings.module.css';
 
 interface UserSettings {
@@ -12,12 +13,24 @@ interface UserSettings {
   defaultExcludeTags: string[];
 }
 
+function toSettings(userSettings: Partial<UserSettings> | undefined, fallbackDisplayName: string): UserSettings | null {
+  if (!userSettings) return null;
+
+  return {
+    customDisplayName: userSettings.customDisplayName ?? fallbackDisplayName,
+    nsfwEnabled: userSettings.nsfwEnabled ?? false,
+    nsfwUnblurred: userSettings.nsfwUnblurred ?? false,
+    defaultIncludeTags: userSettings.defaultIncludeTags ?? [],
+    defaultExcludeTags: userSettings.defaultExcludeTags ?? [],
+  };
+}
+
 const Settings = () => {
   const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
   const navigate = useNavigate();
 
-  const [settings, setSettings] = useState<UserSettings | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [settings, setSettings] = useState<UserSettings | null>(() => toSettings(user?.settings, user?.displayName ?? '') ?? null);
+  const [loading, setLoading] = useState(() => !toSettings(user?.settings, user?.displayName ?? ''));
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +45,13 @@ const Settings = () => {
       return;
     }
 
-    fetch('/api/v1/user/@me/settings', { credentials: 'include' })
+    if (user?.settings) {
+      setSettings(toSettings(user.settings, user.displayName));
+      setLoading(false);
+      return;
+    }
+
+    apiFetch('/api/v1/users/me/settings')
       .then((res) => {
         if (!res.ok) throw new Error('Failed to load settings');
         return res.json();
@@ -40,7 +59,7 @@ const Settings = () => {
       .then((data) => setSettings(data))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [authLoading, isAuthenticated, navigate]);
+  }, [authLoading, isAuthenticated, navigate, user]);
 
   const update = useCallback(
     <K extends keyof UserSettings>(key: K, value: UserSettings[K]) => {
@@ -76,17 +95,17 @@ const Settings = () => {
     setError(null);
 
     try {
-      const res = await fetch('/api/v1/user/@me/settings', {
+      const res = await apiFetch('/api/v1/users/me/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify(settings),
       });
       if (!res.ok) throw new Error('Failed to save settings');
+      await bootstrapAuth(true);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to save settings');
     } finally {
       setSaving(false);
     }
