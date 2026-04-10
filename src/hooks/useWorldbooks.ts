@@ -42,12 +42,14 @@ export function useWorldbooks() {
         excludeTags: excludeTagsKey || undefined,
         creator: authorSearch || undefined,
       });
+      // chub is on some bullshit.
+      const hasMore = res.nodes.length > 0 && pageParam < 100;
       return {
         worldbooks: res.nodes.map(fromChubLorebook),
         page: res.page,
-        hasMore: res.hasMore,
-        total: res.total,
-        totalPages: Math.ceil(res.total / PAGE_SIZE),
+        hasMore,
+        total: 0,
+        totalPages: 0,
       };
     }
   };

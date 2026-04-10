@@ -56,12 +56,14 @@ export function useCharacters(params: { ownerId?: string, ignoreStore?: boolean,
         excludeTags: excludeTagsKey || undefined,
         creator: authorSearch || undefined,
       });
+      // chub is one some bullshit.
+      const hasMore = res.nodes.length > 0 && pageParam < 100;
       return {
         characters: res.nodes.map(transformChubCharacter).map(fromChub),
         page: res.page,
-        hasMore: res.hasMore,
-        total: res.total,
-        totalPages: Math.ceil(res.total / PAGE_SIZE),
+        hasMore,
+        total: 0,
+        totalPages: 0,
       };
     }
   };

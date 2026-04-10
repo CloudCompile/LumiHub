@@ -66,13 +66,15 @@ const BrowsePage: React.FC<BrowsePageProps> = ({
 
   const observerRef = React.useRef<IntersectionObserver | null>(null);
   const sentinelRef = React.useCallback((node: HTMLDivElement | null) => {
-    if (loading || pagination.loadingMore) return;
+    if (loading || pagination.loadingMore || !infiniteScroll || !pagination.hasNextPage) return;
     if (observerRef.current) observerRef.current.disconnect();
 
     observerRef.current = new IntersectionObserver(entries => {
       if (entries[0].isIntersecting && pagination.hasNextPage && infiniteScroll) {
         pagination.onPageChange?.(pagination.page + 1);
       }
+    }, {
+      rootMargin: '240px 0px',
     });
 
     if (node) observerRef.current.observe(node);
@@ -220,7 +222,17 @@ const BrowsePage: React.FC<BrowsePageProps> = ({
         {/* Infinite scroll */}
         {infiniteScroll && hasNext && (
           <div ref={sentinelRef} className={styles.sentinelWrap}>
-            {pagination.loadingMore && <Loader2 size={24} className={styles.pageSpinner} />}
+            {pagination.loadingMore ? (
+              <Loader2 size={24} className={styles.pageSpinner} />
+            ) : (
+              <button
+                type="button"
+                className={styles.pageBtn}
+                onClick={() => pagination.onPageChange?.(pagination.page + 1)}
+              >
+                Load more
+              </button>
+            )}
           </div>
         )}
       </div>
