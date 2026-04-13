@@ -18,7 +18,7 @@ const WorldbookCard: React.FC<Props> = ({ worldbook, blurNsfw = true, onClick })
   const shouldBlur = worldbook.nsfw && blurNsfw && !revealed;
 
   const [favorited, setFavorited] = useState(false);
-  const [favCount, setFavCount] = useState(worldbook.source === 'lumihub' ? (worldbook.favorites ?? 0) : 0);
+  const [favCount, setFavCount] = useState(worldbook.favorites ?? 0);
   const [favPending, setFavPending] = useState(false);
 
   const handleReveal = (e: React.MouseEvent) => {

@@ -137,7 +137,7 @@ export async function incrementViews(id: string) {
   const result = await repo()
     .createQueryBuilder()
     .update(Worldbook)
-    .set({ views: () => 'views + 1' } as any)
+    .set({ views: () => 'views + 1' })
     .where('id = :id', { id })
     .returning('views')
     .execute();

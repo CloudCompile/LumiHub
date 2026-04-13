@@ -20,7 +20,7 @@ const CharacterCard: React.FC<Props> = ({ card, blurNsfw = true, onClick }) => {
   const shouldBlur = card.nsfw && blurNsfw && !revealed;
 
   const [favorited, setFavorited] = useState(false);
-  const [favCount, setFavCount] = useState(card.source === 'lumihub' ? (card.favorites ?? 0) : (card.favorites ?? 0));
+  const [favCount, setFavCount] = useState(card.favorites ?? 0);
   const [favPending, setFavPending] = useState(false);
 
   const handleReveal = (e: React.MouseEvent) => {
