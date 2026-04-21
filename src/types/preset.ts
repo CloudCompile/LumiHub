@@ -44,7 +44,9 @@ export function fromLumiHub(preset: LumiPreset): UnifiedPreset {
   return {
     id: preset.id,
     name: preset.name,
-    description: preset.description?.slice(0, 200) || '',
+    description: preset.description && preset.description.length > 200
+      ? `${preset.description.slice(0, 200)}…`
+      : preset.description || '',
     tags: preset.tags,
     settings: preset.settings,
     creator: preset.owner?.username || 'Unknown',

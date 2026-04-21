@@ -111,7 +111,7 @@ presets.get('/:id/export', async (c) => {
     return c.json({ error: 'Unavailable', message: 'This content has been hidden by moderation', statusCode: 403 }, 403);
   }
 
-  const filename = preset.name.replace(/[^a-zA-Z0-9_\-. ]/g, '_').trim() || 'preset';
+  const filename = preset.name.replace(/[^a-zA-Z0-9_\-. ]/g, '_').replace(/\s+/g, '_').trim() || 'preset';
   return new Response(JSON.stringify(preset.settings, null, 2), {
     headers: {
       'Content-Type': 'application/json',

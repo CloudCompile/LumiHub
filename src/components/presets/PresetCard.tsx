@@ -46,6 +46,7 @@ const PresetCard: React.FC<Props> = ({ preset, onClick }) => {
   const [favPending, setFavPending] = useState(false);
 
   const params = extractParams(preset.settings);
+  const settingCount = Object.keys(preset.settings).length;
   const fmt = (n: number) => n > 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
 
   const handleFav = useCallback(async (e: React.MouseEvent) => {
@@ -108,7 +109,7 @@ const PresetCard: React.FC<Props> = ({ preset, onClick }) => {
         </div>
       ) : (
         <p className={styles.rawHint}>
-          {Object.keys(preset.settings).length} setting{Object.keys(preset.settings).length !== 1 ? 's' : ''}
+          {settingCount} setting{settingCount !== 1 ? 's' : ''}
         </p>
       )}
 

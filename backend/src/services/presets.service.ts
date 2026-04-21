@@ -154,11 +154,13 @@ export async function incrementViews(id: string) {
 
 function resolveUploadPath(relativePath: string): string | null {
   const uploadsRoot = path.resolve(UPLOAD_PATHS.ROOT);
+  // Strip leading slashes and the "uploads/" prefix if present to get a relative sub-path
   const normalized = relativePath.replace(/^\/+/, '');
   const absolute = path.resolve(uploadsRoot, normalized.startsWith(`${UPLOAD_PATHS.ROOT}/`)
     ? normalized.slice(UPLOAD_PATHS.ROOT.length + 1)
     : normalized);
 
+  // Reject any path that escapes the uploads root to prevent path-traversal attacks
   if (absolute === uploadsRoot || absolute.startsWith(`${uploadsRoot}${path.sep}`)) {
     return absolute;
   }

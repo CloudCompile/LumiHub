@@ -62,7 +62,7 @@ const PresetDetail: React.FC = () => {
     );
   }
 
-  const isOwner = user && lumiData && (lumiData as any).owner?.id === user.id;
+  const isOwner = user && lumiData && lumiData.owner?.id === user.id;
 
   const handleDelete = async () => {
     if (!lumiData || !confirm(`Delete "${preset.name}"? This cannot be undone.`)) return;
